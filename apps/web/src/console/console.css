@@ -1,0 +1,549 @@
+/*
+  THE CONSOLE SHELL.
+
+  Not part of the Daylight design system. Daylight governs the 480x320 screen;
+  this is the moulded plastic around it. DESIGN-SYSTEM.md section 10.
+
+  It is also the one place in the product where a real easing curve is allowed,
+  because it is illustrated and off the pixel grid.
+
+  Ported from mockups/design-directions.html. Four custom properties recolour
+  the entire shell, so a second colourway is a four line change.
+*/
+
+.console {
+  --shell: #6e54ff;
+  --shell-d: #4a35c4;
+  --shell-dd: #3a2a9e;
+  --shell-l: #9c89ff;
+  --btn: #e4dfff;
+  --btn-d: #b3a6ec;
+
+  /*
+    ABSOLUTELY POSITIONED, AND THAT IS THE MOBILE FIX.
+
+    `transform: scale()` shrinks what you SEE and changes nothing about the
+    box the layout reserves. So a 568px console scaled to 0.6 still asked its
+    parent for 568px, and on a 412px phone the grid centred a box wider than
+    the screen, pushed it half off, and `overflow: hidden` cut the rest. The
+    console looked broken at exactly the size most judges will open it at.
+
+    Taking it out of flow removes the question entirely: there is no layout
+    box left to overflow, and centring is done by the translate below, which
+    operates on the SCALED size because it sits in the same transform.
+  */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 568px;
+  filter: drop-shadow(0 26px 40px rgba(0, 0, 0, 0.55));
+  transform-origin: center center;
+  user-select: none;
+}
+
+/* The stage fills the viewport and centres the console on the dark desk.
+   The console is NOT fullscreen on desktop, by design.
+
+   `fixed; inset: 0` rather than `100dvh`: dvh is the viewport MINUS retracting
+   browser chrome, and it settles a frame or two after first paint on mobile.
+   The fit scale is measured from this box, so a stage that is briefly the
+   wrong size hands the console a scale computed against a viewport that no
+   longer exists. A fixed box is the visual viewport by definition, on the
+   first frame and on every frame after. */
+.console-stage {
+  position: fixed;
+  inset: 0;
+  background: var(--color-ink);
+  overflow: hidden;
+}
+
+.lid,
+.base {
+  position: relative;
+  background: linear-gradient(
+    178deg,
+    var(--shell-l) 0%,
+    var(--shell) 9%,
+    var(--shell) 84%,
+    var(--shell-d) 100%
+  );
+  box-shadow:
+    inset 2px 0 0 rgba(255, 255, 255, 0.16),
+    inset -2px 0 0 rgba(0, 0, 0, 0.16);
+}
+.lid {
+  border-radius: 26px 26px 8px 8px;
+  padding: 26px 26px 28px;
+}
+.base {
+  border-radius: 8px 8px 34px 34px;
+  padding: 22px 30px 28px;
+}
+
+.screw {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--shell-l),
+    var(--shell-d)
+  );
+  box-shadow:
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.screw::after {
+  content: '';
+  position: absolute;
+  inset: 4px 2px;
+  border-top: 2px solid rgba(0, 0, 0, 0.28);
+  transform: rotate(-30deg);
+}
+.screw.tl {
+  top: 9px;
+  left: 9px;
+}
+.screw.tr {
+  top: 9px;
+  right: 9px;
+}
+.screw.bl {
+  bottom: 9px;
+  left: 9px;
+}
+.screw.br {
+  bottom: 9px;
+  right: 9px;
+}
+
+.bezel {
+  position: relative;
+  padding: 22px 20px;
+  border-radius: 14px;
+  background: #191228;
+  box-shadow:
+    inset 0 4px 12px rgba(0, 0, 0, 0.85),
+    inset 0 -2px 0 rgba(255, 255, 255, 0.05),
+    0 1px 0 var(--shell-l);
+}
+
+/* The screen. Exactly 480 x 320 logical, always. Only the scale changes. */
+.viewport {
+  position: relative;
+  width: var(--screen-w);
+  height: var(--screen-h);
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--color-screen);
+}
+
+.wordmark {
+  padding-top: 13px;
+  color: var(--shell-l);
+  font-size: 10px;
+  letter-spacing: 0.46em;
+  text-indent: 0.46em;
+  text-align: center;
+}
+
+.hinge {
+  display: flex;
+  align-items: stretch;
+  height: 34px;
+}
+.hinge .cap {
+  width: 58px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, var(--shell-l), var(--shell-d));
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.28);
+}
+.hinge .bar {
+  flex: 1;
+  margin: 5px 3px;
+  border-radius: 5px;
+  background: linear-gradient(
+    180deg,
+    var(--shell-dd),
+    var(--shell-d) 55%,
+    var(--shell-dd)
+  );
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+.toprow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.led {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #85e6ff;
+  box-shadow:
+    0 0 12px 3px rgba(133, 230, 255, 0.8),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/*
+  The Monad logomark, moulded into the shell.
+
+  `flex: none` is the whole bug fix. `.toprow` is a flex row holding the volume
+  slider, this mark, and the LED, and a flex item with no basis is allowed to
+  shrink below its width. The slider is the widest thing in the row, so it took
+  the space and squeezed the mark into an oval. It looked like a bad SVG and it
+  was a missing flex property.
+
+  Bigger and more opaque than before because it is stamped plastic on a purple
+  shell, not a UI element on white: at 26px and 0.75 alpha it read as a smudge.
+*/
+.mark {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  opacity: 0.92;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.28));
+}
+.mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Volume slider, on the LOWER half. */
+.vol {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.vol-track {
+  position: relative;
+  width: 98px;
+  height: 16px;
+  border-radius: 9px;
+  background: var(--shell-dd);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55);
+  touch-action: none;
+  cursor: grab;
+}
+.vol-track:active {
+  cursor: grabbing;
+}
+.vol-track:focus-visible {
+  outline: 2px solid #85e6ff;
+  outline-offset: 3px;
+}
+.vol-knob {
+  position: absolute;
+  top: -4px;
+  width: 22px;
+  height: 24px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #fff, var(--btn) 40%, var(--btn-d));
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+}
+.vol-knob::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-left: 1px solid var(--btn-d);
+  border-right: 1px solid var(--btn-d);
+}
+.vol-cap {
+  min-width: 46px;
+  color: var(--shell-l);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+}
+
+.deck {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.dpad-well {
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  border-radius: 24px;
+  background: var(--shell-d);
+  box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.42);
+}
+.dpad {
+  position: relative;
+  width: 104px;
+  height: 104px;
+}
+.dpad i {
+  position: absolute;
+  background: linear-gradient(
+    180deg,
+    #fff 0%,
+    var(--btn) 30%,
+    var(--btn-d) 100%
+  );
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+}
+.dpad i.v {
+  top: 0;
+  left: 36px;
+  width: 32px;
+  height: 104px;
+  border-radius: 7px;
+}
+.dpad i.h {
+  top: 36px;
+  left: 0;
+  width: 104px;
+  height: 32px;
+  border-radius: 7px;
+}
+.dpad i.c {
+  top: 40px;
+  left: 40px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--btn-d);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Touch targets sit on top of the drawn cross. The drawing is 104px but a
+   finger needs 44px, so the hit areas are quadrants of the whole well. */
+.dpad-hit {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+}
+.dpad-hit button {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.dpad-hit button:focus-visible {
+  outline: 2px solid #85e6ff;
+  outline-offset: -2px;
+}
+
+/* Lit by the matching keypress. This teaches the mapping without a tutorial
+   screen, which is one fewer screen to build. */
+.dpad i.lit {
+  filter: brightness(1.35);
+}
+
+.mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+.startsel {
+  display: flex;
+  gap: 16px;
+}
+.startsel button {
+  width: 46px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  transform: rotate(-16deg);
+  background: linear-gradient(180deg, var(--btn), var(--btn-d));
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+.startsel button.lit {
+  filter: brightness(1.35);
+}
+.speaker {
+  display: grid;
+  grid-template-columns: repeat(5, 7px);
+  gap: 8px;
+}
+.speaker i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--shell-dd);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.ab-well {
+  display: flex;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: 60px;
+  background: var(--shell-d);
+  transform: rotate(-18deg);
+  box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.42);
+}
+.ab-well button {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    180deg,
+    #fff 0%,
+    var(--btn) 32%,
+    var(--btn-d) 100%
+  );
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.24);
+  color: var(--shell-d);
+  font-size: 14px;
+  font-weight: 700;
+  transform: rotate(18deg);
+  cursor: pointer;
+}
+.ab-well button.lit {
+  filter: brightness(1.35);
+}
+
+/*
+  THE KEYBOARD LEGEND.
+
+  `a` is LEFT and the A BUTTON is `z`. That is the emulator mapping and it is
+  correct, and it is also completely invisible: a player reads "A INSPECT" on
+  the screen, presses A on the keyboard, and the cursor slides left. The screen
+  is telling the truth about the console's A button and the desk hardware never
+  said which key that is.
+
+  It lives on the shell rather than on the 480x320 screen because it is a fact
+  about this desk, not about the game, and because screen space is the one
+  budget that is genuinely fixed. Hidden on touch, where there is no keyboard
+  to label and the buttons are already under a thumb.
+*/
+.keyhint {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 0;
+  padding-top: 16px;
+  color: var(--shell-l);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.keyhint b {
+  color: #fff;
+  font-weight: 700;
+}
+@media (pointer: coarse) {
+  .keyhint {
+    display: none;
+  }
+}
+
+/*
+  PORTRAIT PHONE CHROME.
+
+  The console does not change shape here, it loses padding. On a 412px phone
+  the fit scale is decided entirely by width, so every pixel of moulded plastic
+  around the screen is a pixel the 480x320 screen does not get. Trimming the
+  shell from 568 to 520 wide buys the screen roughly 9% more of the device for
+  nothing but less bezel, and the D-pad and A/B buttons stay above the 44px
+  touch minimum, which is where the trimming stops.
+*/
+@media (max-width: 640px) {
+  .console {
+    width: 520px;
+    filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.5));
+  }
+  .lid {
+    border-radius: 16px 16px 6px 6px;
+    padding: 10px 10px 8px;
+  }
+  .bezel {
+    padding: 10px;
+    border-radius: 8px;
+  }
+  .wordmark {
+    padding-top: 8px;
+    font-size: 9px;
+  }
+  .hinge {
+    height: 20px;
+  }
+  .hinge .cap {
+    width: 44px;
+  }
+  .base {
+    border-radius: 6px 6px 24px 24px;
+    padding: 14px 16px 18px;
+  }
+  .toprow {
+    margin-bottom: 12px;
+  }
+  .mark {
+    width: 26px;
+    height: 26px;
+  }
+  .deck {
+    gap: 8px;
+  }
+  .dpad-well {
+    width: 112px;
+    height: 112px;
+    border-radius: 18px;
+  }
+  .dpad {
+    width: 88px;
+    height: 88px;
+  }
+  .dpad i.v {
+    left: 30px;
+    width: 28px;
+    height: 88px;
+  }
+  .dpad i.h {
+    top: 30px;
+    width: 88px;
+    height: 28px;
+  }
+  .dpad i.c {
+    top: 33px;
+    left: 33px;
+    width: 22px;
+    height: 22px;
+  }
+  .mid {
+    gap: 11px;
+  }
+  .ab-well {
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .ab-well button {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+.rotate-prompt {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 32px;
+  background: var(--color-ink);
+  color: var(--color-sunk);
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
