@@ -321,10 +321,86 @@ describe('the cursor is a state of the pin', () => {
   })
 
   it('names only the selected pool, because fourteen labels is a list', () => {
+    // The label is the PAIR and its size now, not `tokenX` alone. On the real
+    // pool set three pools are the same token against the same stable and
+    // differ only by bin step, so `tokenX` named nothing; TVL is what actually
+    // tells them apart and money is a unit every player already reads.
     const { getAllByText } = renderTracker()
-    expect(getAllByText('AAA').length).toBe(1)
+    expect(getAllByText(/AAA\/USDC/).length).toBe(1)
     press('LEFT')
-    expect(getAllByText('CCC').length).toBe(1)
+    expect(getAllByText(/CCC\/USDC/).length).toBe(1)
+  })
+})
+
+describe('the list view', () => {
+  it('SELECT swaps the map for a list and back', () => {
+    const { queryByText, getByText } = renderTracker()
+
+    // The map names only the pool under the cursor; the list names all of them,
+    // which is the whole reason it exists.
+    expect(queryByText(/CCC\/USDC/)).not.toBeInTheDocument()
+
+    press('SELECT')
+    expect(getByText(/AAA\/USDC/)).toBeInTheDocument()
+    expect(getByText(/CCC\/USDC/)).toBeInTheDocument()
+
+    press('SELECT')
+    expect(queryByText(/CCC\/USDC/)).not.toBeInTheDocument()
+  })
+
+  it('puts the pools a player can open at the top', () => {
+    const { container } = renderTracker()
+    press('SELECT')
+
+    const rows = [...container.querySelectorAll('button[type="button"]')]
+    // `upper` is a CSS text-transform, so textContent keeps the source casing.
+    const states = rows.map((r) =>
+      /skipped/i.test(r.textContent) ? 'skipped' : 'open',
+    )
+
+    // Sorted by usefulness rather than by score: every openable pool before
+    // every skipped one. A player scanning from the top reaches something they
+    // can actually play first.
+    expect(states.indexOf('skipped')).toBeGreaterThan(-1)
+    expect(states.lastIndexOf('open')).toBeLessThan(states.indexOf('skipped'))
+  })
+
+  it('A from the list inspects, and B returns to the list rather than the map', () => {
+    const { getByText, queryByText } = renderTracker()
+    press('SELECT')
+    press('A')
+
+    // The inspect panel, reached from the list.
+    expect(getByText(/B Back to map/i)).toBeInTheDocument()
+
+    press('B')
+    // Back in the LIST, not the map: every pool is named again.
+    expect(queryByText(/CCC\/USDC/)).toBeInTheDocument()
+  })
+})
+
+describe('where the cursor starts', () => {
+  it('lands on a pool the tier can actually open', () => {
+    // It used to start at index 0, whichever pool the snapshot happened to sort
+    // first. On the real set that is a pool the gates reject, so the first
+    // thing a new player saw was a dim pin above a locked button.
+    const failing = scoredPool({
+      pool: {
+        pairAddress: '0xdead',
+        tokenX: { address: '0xdead', symbol: 'BAD', decimals: 18 },
+        tokenY: {
+          address: '0x2222222222222222222222222222222222222222',
+          symbol: 'USDC',
+          decimals: 6,
+        },
+      },
+      failures: ['safety-too-low'],
+    })
+
+    const { getByText } = renderTracker({ pools: [failing, PASSING_LOW] })
+
+    // PASSING_LOW is the only openable pool, so the cursor must be on it.
+    expect(getByText(/AAA\/USDC/)).toBeInTheDocument()
   })
 })
 
@@ -354,25 +430,32 @@ describe('the radar has something in it', () => {
 })
 
 describe('zoom', () => {
-  it('SELECT cycles the levels and wraps back to 1x', () => {
-    const { getByText, queryByText } = renderTracker()
+  // SELECT used to cycle the zoom and now opens the LIST, so the two buttons
+  // below the plot are the whole zoom control. That is a deliberate trade: a
+  // list separates overlapping pools better than 3x ever did, and the zoom
+  // never lost a control it did not already have a bigger version of.
+  const zoomIn = (utils: ReturnType<typeof renderTracker>) =>
+    fireEvent.click(utils.getByLabelText('Zoom in'))
 
-    expect(getByText('1x')).toBeInTheDocument()
-    press('SELECT')
-    expect(getByText('2x')).toBeInTheDocument()
-    press('SELECT')
-    expect(getByText('3x')).toBeInTheDocument()
-    press('SELECT')
-    expect(getByText('1x')).toBeInTheDocument()
-    expect(queryByText('3x')).not.toBeInTheDocument()
+  it('steps up through the levels and stops at 3x', () => {
+    const utils = renderTracker()
+
+    expect(utils.getByText('1x')).toBeInTheDocument()
+    zoomIn(utils)
+    expect(utils.getByText('2x')).toBeInTheDocument()
+    zoomIn(utils)
+    expect(utils.getByText('3x')).toBeInTheDocument()
+    zoomIn(utils)
+    expect(utils.getByText('3x')).toBeInTheDocument()
   })
 
   it('cancels itself on the pins, so zooming separates them without fattening them', () => {
-    const { container } = renderTracker()
-    const pinBox = () => container.querySelector('[role="img"]')?.parentElement
+    const utils = renderTracker()
+    const pinBox = () =>
+      utils.container.querySelector('[role="img"]')?.parentElement
 
     expect(pinBox()?.getAttribute('style')).toContain('scale(1)')
-    press('SELECT')
+    zoomIn(utils)
     expect(pinBox()?.getAttribute('style')).toContain('scale(0.5)')
   })
 })
@@ -398,6 +481,10 @@ describe('the worst pool still shows its controls', () => {
         PASSING_LOW,
       ],
     })
+    // The cursor starts on the best pool that PASSES, so the worst one is a
+    // press away rather than under the cursor. That is the point of the new
+    // starting position and it is why this test moves before it inspects.
+    press('LEFT')
     press('A')
 
     expect(getByText(/Too hot for this difficulty/)).toBeInTheDocument()
@@ -412,6 +499,7 @@ describe('the worst pool still shows its controls', () => {
         PASSING_LOW,
       ],
     })
+    press('LEFT')
     press('A')
 
     // `min-h-0 flex-1` is what lets a flex child actually shrink. Without it

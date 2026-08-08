@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import poolsJson from '../../../../data/pools.mainnet.json'
+// MUST BE THE SAME FILE `fixtures.ts` IMPORTS. The assertion below is that the
+// clock is the snapshot's own `capturedAt`, and reading a different snapshot
+// here turns that invariant into a comparison of two unrelated timestamps —
+// which is exactly how this test failed when fixtures.ts moved to the
+// self-deployed testnet and this line stayed on mainnet.
+import poolsJson from '../../../../data/pools.self-testnet.json'
 import {
   FIXTURE_NOW,
   availableBinSteps,

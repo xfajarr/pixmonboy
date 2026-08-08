@@ -107,9 +107,48 @@ export function PoolTracker({
   onPlayPool,
   onBack,
 }: PoolTrackerProps) {
-  const [view, setView] = useState<'map' | 'inspect'>('map')
-  const [cursorIndex, setCursorIndex] = useState(0)
+  /**
+   * THREE VIEWS, AND THE LIST IS NOT A FALLBACK.
+   *
+   * A scatter plot of safety against heat is an expert idiom: it assumes the
+   * reader already knows those are the two axes worth caring about. The list
+   * assumes nothing, and on this data it is strictly more informative — every
+   * pool names itself and shows its size at once, where the map names only the
+   * one under the cursor.
+   *
+   * The map stays the default because it is what makes this screen feel like an
+   * instrument rather than a settings page, and because the shaded gate region
+   * shows the FILTER doing work in a way no list can. SELECT swaps between
+   * them; both reach INSPECT through A, and both share one cursor, so switching
+   * never loses the player's place.
+   */
+  const [view, setView] = useState<'map' | 'list' | 'inspect'>('map')
+  /**
+   * The cursor starts on the BEST POOL THE PLAYER CAN ACTUALLY OPEN.
+   *
+   * It used to start at index 0, which is whatever the snapshot happened to
+   * sort first, and on this pool set that is a pool the tier's gates reject.
+   * So the first thing a new player saw was a dim pin with a locked button,
+   * and finding a playable one meant walking the map pressing A. With one pool
+   * passing on EASY, "take me to the one that passed" is very close to the
+   * entire job of this screen.
+   *
+   * Falls back to index 0 when nothing passes, which is a state the empty
+   * branch below renders anyway.
+   */
+  const [cursorIndex, setCursorIndex] = useState(() => {
+    let best = -1
+    pools.forEach((entry, index) => {
+      if (!entry.passes) return
+      if (best === -1 || entry.score.safety > pools[best].score.safety) {
+        best = index
+      }
+    })
+    return best === -1 ? 0 : best
+  })
   const [zoomStep, setZoomStep] = useState(0)
+  /** Which view INSPECT was opened from, so B goes back where A came from. */
+  const [cameFromList, setCameFromList] = useState(false)
   const zoom = ZOOM_LEVELS[zoomStep]
 
   const character = characters[characterId]
@@ -127,7 +166,7 @@ export function PoolTracker({
 
     if (view === 'inspect') {
       if (intent === 'B') {
-        setView('map')
+        setView(cameFromList ? 'list' : 'map')
         return
       }
       if (intent === 'A' && selected.passes) {
@@ -144,16 +183,32 @@ export function PoolTracker({
       return
     }
     if (intent === 'A') {
+      setCameFromList(view === 'list')
       setView('inspect')
       return
     }
-    // Cycles rather than paired zoom-in and zoom-out buttons: the console has
-    // one spare control on this screen, not two, and three levels wrap in one
-    // press from the far end.
+    // SELECT swaps map and list. It used to cycle the zoom, and the zoom did
+    // not lose anything by it: the `-`/`+` buttons below the plot already do
+    // that, they are the bigger touch target, and a list separates overlapping
+    // pools better than 3x ever did.
     if (intent === 'SELECT') {
-      setZoomStep((step) => (step + 1) % ZOOM_LEVELS.length)
+      setView((current) => (current === 'list' ? 'map' : 'list'))
       return
     }
+
+    // The LIST is a list, so its cursor walks one row at a time. Running the
+    // map's spatial `nextPin` here would skip rows whenever two pools shared a
+    // score on the axis being pressed, which looks like a dropped input.
+    if (view === 'list') {
+      if (intent === 'UP' || intent === 'DOWN') {
+        setCursorIndex((current) => {
+          const next = current + (intent === 'DOWN' ? 1 : -1)
+          return next >= 0 && next < pools.length ? next : current
+        })
+      }
+      return
+    }
+
     if (DIRECTIONS.has(intent as CursorDirection)) {
       setCursorIndex((current) =>
         nextPin(
@@ -223,6 +278,16 @@ export function PoolTracker({
           quote={QUOTES[characterId]}
           quoteSpeaker={character.label}
           characterId={characterId}
+        />
+      ) : view === 'list' ? (
+        <ListView
+          pools={pools}
+          cursorIndex={cursorIndex}
+          onSelect={(index) => {
+            setCursorIndex(index)
+            setCameFromList(true)
+            setView('inspect')
+          }}
         />
       ) : (
         <MapView
@@ -320,12 +385,33 @@ function MapView({
                     size={selected ? PIN_SIZE_SELECTED : PIN_SIZE}
                   />
                   {/* Only the selected pool names itself. Fourteen labels is
-                      not a map, it is a list with coordinates. */}
+                      not a map, it is a list with coordinates.
+
+                      THE PAIR, NOT THE TOKEN, AND THEN THE SIZE. This printed
+                      `tokenX.symbol` alone, and on a real pool set that is not
+                      a name: three of the four pools here are tMON against the
+                      same stable and differ only by bin step, so the label read
+                      "tMON" three times and identified nothing. TVL is the
+                      disambiguator rather than the bin step because money is a
+                      unit everyone already reads, and because it is the number
+                      that actually differs between them. */}
                   {selected ? (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 whitespace-nowrap">
+                    <div className="absolute top-full left-1/2 flex -translate-x-1/2 flex-col items-center pt-1 whitespace-nowrap">
                       <PixelText role="micro" upper>
-                        {entry.pool.tokenX.symbol}
+                        {entry.pool.tokenX.symbol}/{entry.pool.tokenY.symbol}
+                        {' · '}
+                        {compactUsd(entry.pool.tvlUsd)}
                       </PixelText>
+                      {/* The reason it is locked, where the cursor already is.
+                          Without this the only way to learn why a dim pin is
+                          dim was to press A, read, press B, and repeat for
+                          every pool. The full list still lives on the inspect
+                          panel; this is the first line of it. */}
+                      {!entry.passes && entry.gates.failures.length > 0 ? (
+                        <PixelText role="micro" tone="loss">
+                          {GATE_COPY[entry.gates.failures[0]]}
+                        </PixelText>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -362,10 +448,13 @@ function MapView({
           dense. Down here the targets are also big enough for a thumb, which
           a 20px badge in the corner of a 480px screen never was on a phone.
 
-          The keyboard path is not a fallback for these. SELECT cycles and
-          these step, so every input the console has can reach the feature and
-          neither one is the "real" control. ARCHITECTURE.md 3: a screen never
-          grows an action the D-pad cannot perform.
+          THESE ARE NOW THE ONLY WAY TO ZOOM, and the comment above used to
+          say otherwise. SELECT cycled the zoom until the list view needed a
+          key; it is a better use of the one spare control, because a list
+          separates overlapping pools better than 3x ever did and the zoom
+          still has two buttons of its own. ARCHITECTURE.md 3 asks that no
+          action be unreachable from the console, and none is: zoom is on
+          these, the list is on SELECT.
         */}
         <div className="flex items-center gap-1">
           <ZoomButton
@@ -387,9 +476,6 @@ function MapView({
             disabled={zoom === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]}
             onClick={() => onZoom(1)}
           />
-          <PixelText role="micro" tone="dim" upper>
-            Select
-          </PixelText>
         </div>
       </div>
 
@@ -430,7 +516,112 @@ function MapView({
           A Inspect
         </PixelText>
         <PixelText role="micro" upper>
+          Select list
+        </PixelText>
+        <PixelText role="micro" upper>
           B Back
+        </PixelText>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Every pool as a row, which is the view that assumes nothing.
+ *
+ * The map answers "how do these compare" and needs the reader to already know
+ * that safety and heat are the axes. This answers "what is there", which is the
+ * question a first-time player actually has, and it answers it for all of them
+ * at once rather than one pin at a time.
+ *
+ * SORTED BY WHAT THE PLAYER CAN USE. Passing pools first, then by safety inside
+ * each group, so the top of the list is always the best thing they can open.
+ * The map cannot do this — a pin's position IS its score — which is the second
+ * reason this view is not merely a fallback.
+ */
+function ListView({
+  pools,
+  cursorIndex,
+  onSelect,
+}: {
+  pools: Array<ScoredPool>
+  cursorIndex: number
+  onSelect: (index: number) => void
+}) {
+  // Index-carrying, because the cursor and `onPlayPool` both address a pool by
+  // its position in the ORIGINAL array. Sorting a copy of the indices keeps the
+  // display order independent of the identity every other part of the screen
+  // uses.
+  const order = pools
+    .map((entry, index) => ({ entry, index }))
+    .sort((a, b) => {
+      if (a.entry.passes !== b.entry.passes) return a.entry.passes ? -1 : 1
+      return b.entry.score.safety - a.entry.score.safety
+    })
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-1">
+      <div className="border-edge flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto border p-1">
+        {order.map(({ entry, index }) => {
+          const focused = index === cursorIndex
+          return (
+            <button
+              key={entry.pool.pairAddress}
+              type="button"
+              onClick={() => onSelect(index)}
+              aria-current={focused ? 'true' : undefined}
+              className={`pressable border-edge flex items-center gap-2 border px-1 py-1 text-left ${
+                focused ? 'bg-accent' : 'bg-panel'
+              }`}
+            >
+              <MapPin
+                band={riskBand(entry.score.safety)}
+                filtered={!entry.passes}
+                size={10}
+              />
+              {/* The pair, then the size. Same two facts and same order as the
+                  map's selected label, so switching views never renames a pool
+                  the player was just looking at. */}
+              <PixelText
+                role="micro"
+                tone={focused ? 'invert' : 'ink'}
+                upper
+                className="flex-1 truncate"
+              >
+                {entry.pool.tokenX.symbol}/{entry.pool.tokenY.symbol}
+              </PixelText>
+              <PixelText
+                role="micro"
+                tone={focused ? 'invert' : 'dim'}
+                className="tabular-nums"
+              >
+                {compactUsd(entry.pool.tvlUsd)}
+              </PixelText>
+              {/* One word, not a lock glyph. A padlock says "you cannot", this
+                  says which side of the filter the pool fell on, and the reason
+                  is one press away on the inspect panel. */}
+              <PixelText
+                role="micro"
+                tone={focused ? 'invert' : 'dim'}
+                upper
+                className="w-14 text-right"
+              >
+                {entry.passes ? 'open' : 'skipped'}
+              </PixelText>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="mt-auto flex items-center justify-between">
+        <PixelText role="micro" upper>
+          Move cursor
+        </PixelText>
+        <PixelText role="micro" upper>
+          A Inspect
+        </PixelText>
+        <PixelText role="micro" upper>
+          Select map
         </PixelText>
       </div>
     </div>

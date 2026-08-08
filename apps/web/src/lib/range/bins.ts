@@ -24,6 +24,37 @@ export function priceFromBinId(binId: number, binStep: number): number {
 }
 
 /**
+ * The same price, in the units a person actually says out loud.
+ *
+ * `priceFromBinId` above is a RAW ratio: token Y base units per one base unit
+ * of token X. That is Liquidity Book's own definition and it is the right thing
+ * for maths, but it is never the right thing for a screen. For an 18-decimal
+ * token quoted against a 6-decimal stable, the two differ by 10^12:
+ *
+ *   raw      0.000000000002
+ *   what a person means            2
+ *
+ * Three screens rendered the raw figure for a while and printed prices like
+ * `2e-12` next to a dollar sign. Nothing threw, nothing failed a test, and the
+ * number was wrong by twelve orders of magnitude — the exact failure mode the
+ * seeding script warns about in `contracts/script/SeedPools.s.sol`, arriving
+ * from the other direction.
+ *
+ * Kept as a SEPARATE function rather than folded into `priceFromBinId`, because
+ * the raw ratio is what the bin maths is defined in and quietly rescaling it
+ * would break every caller that is correctly working in bin space. A caller
+ * picks one on purpose: raw for arithmetic, this for anything a person reads.
+ */
+export function poolPriceFromBinId(
+  binId: number,
+  binStep: number,
+  decimalsX: number,
+  decimalsY: number,
+): number {
+  return priceFromBinId(binId, binStep) * 10 ** (decimalsX - decimalsY)
+}
+
+/**
  * The inverse. Returns a real number; callers decide how to round, because
  * rounding toward or away from the active bin is a product decision rather
  * than a maths one.

@@ -140,10 +140,21 @@ describe('the live gate readout', () => {
 
 describe('the three-tier count strip', () => {
   it('shows a count per tier with a visible denominator', () => {
-    const { getByText } = renderDifficulty({ difficulty: 'easy' })
-    for (const tier of TIERS) {
-      const passing = passingCount(tier, false)
-      expect(getByText(`${passing} of ${TOTAL_POOLS}`)).toBeInTheDocument()
+    const { getAllByText } = renderDifficulty({ difficulty: 'easy' })
+
+    // TWO TIERS CAN SHOW THE SAME COUNT, and `getByText` throws when they do.
+    // That is not hypothetical: against the self-deployed testnet pool set,
+    // NORMAL and HARD both pass all four pools, so both rows read "4 of 4" and
+    // this test failed on a screen that was rendering perfectly. Counting
+    // occurrences keeps the real invariant — every tier prints its own count
+    // with a denominator — without assuming the three counts are distinct.
+    const expected = TIERS.map(
+      (tier) => `${passingCount(tier, false)} of ${TOTAL_POOLS}`,
+    )
+
+    for (const label of new Set(expected)) {
+      const wanted = expected.filter((e) => e === label).length
+      expect(getAllByText(label)).toHaveLength(wanted)
     }
   })
 })

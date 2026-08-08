@@ -4,7 +4,7 @@ import { brand } from '../../config/brand'
 import {
   binIdsForPlan,
   edgeProximity,
-  priceFromBinId,
+  poolPriceFromBinId,
   rangeState,
 } from '../../lib/range/bins'
 import { planForSession } from '../../lib/range/plan'
@@ -251,9 +251,12 @@ export function InRange({
             : 'run'
           : 'alert'
 
-  const lowPrice = priceFromBinId(edges.lowerBinId, pool.binStep)
-  const highPrice = priceFromBinId(edges.upperBinId, pool.binStep)
-  const nowPrice = priceFromBinId(sim.activeBinId, pool.binStep)
+  // Decimal-aware, so an 18/6 pair reads as 0.0209 and not 2.09e-14.
+  const dx = pool.tokenX.decimals
+  const dy = pool.tokenY.decimals
+  const lowPrice = poolPriceFromBinId(edges.lowerBinId, pool.binStep, dx, dy)
+  const highPrice = poolPriceFromBinId(edges.upperBinId, pool.binStep, dx, dy)
+  const nowPrice = poolPriceFromBinId(sim.activeBinId, pool.binStep, dx, dy)
 
   return (
     /* nad-pulse on the OUTER frame, so the whole screen flinches rather than

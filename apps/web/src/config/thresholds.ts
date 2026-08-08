@@ -119,6 +119,23 @@ export const selfTestnetProfile: ScoringProfile = {
   depthFloorUsd: 50,
   depthCeilingUsd: 20_000,
   ageSaturationSeconds: 60 * 60 * 6,
+  /**
+   * tUSD is the stable leg on our own deployment, so it has to be a strong
+   * quote or every pool we seeded scores 20 on quote quality and EASY's gate
+   * rejects all of them: `gatesFor` builds `allowedQuoteSymbols` from exactly
+   * this list, and `quoteQualityScore` reads the pool's tokenY SYMBOL rather
+   * than any address in chains.ts.
+   *
+   * This is not grading our own homework. On this chain tUSD IS the trusted
+   * stable: it is the token every seeded pair quotes against, minted by
+   * contracts/src/TestToken.sol, and no more or less real than a testnet USDC
+   * nobody can mint. What would be dishonest is carrying mainnet's USDC and
+   * USDT0 over to a chain where our pools do not use them, and the spread
+   * operator above does exactly that, so the list is replaced rather than
+   * extended.
+   */
+  strongQuotes: ['tUSD'],
+  midQuotes: ['WMON', 'MON'],
 }
 
 export const profiles = {
@@ -169,10 +186,30 @@ export function gatesFor(
 
   return {
     minTvlUsd: base.minTvlUsd * scale,
-    minAgeSeconds:
-      profile.id === 'mainnet'
-        ? base.minAgeSeconds
-        : Math.round(base.minAgeSeconds * 0.02),
+    /**
+     * ON SELF-TESTNET THE AGE GATE IS INERT, AND SAYING SO IS THE POINT.
+     *
+     * Age exists to separate an established pool from one created an hour ago
+     * to be rugged. That question is meaningful on mainnet, where pools span
+     * years. It is meaningless on a chain where WE deployed the factory: every
+     * pair was created by one run of contracts/script/SeedPools.s.sol, so they
+     * all carry the same birthday and the gate cannot rank them. It can only
+     * pass all four or fail all four.
+     *
+     * It failed all four. At the previous 2% scale, EASY still demanded 6.7
+     * hours from pools minted minutes before the snapshot froze the clock
+     * (`FIXTURE_NOW` is the capture time, so their age stays near zero however
+     * long you wait to look). The tracker rendered "Nothing passed" at every
+     * difficulty — a correct gate asking a question this chain cannot answer.
+     *
+     * So it is zero here, declared rather than tuned. The tiers still
+     * discriminate, on the two axes that carry real signal on this chain: TVL
+     * spans 601 to 48,003 dollars across the four pools, and SAFETY spans 54 to
+     * 75. Nothing is being waved through; one dimension is being dropped
+     * because it has no variance to contribute, exactly as `lpConcentrationScore`
+     * drops out of SAFETY when it reads null.
+     */
+    minAgeSeconds: profile.id === 'mainnet' ? base.minAgeSeconds : 0,
     allowedQuoteSymbols:
       difficulty === 'easy'
         ? profile.strongQuotes

@@ -25,10 +25,10 @@
 //
 // data/pools.fixture.json is kept for the tests, which need invented pools that
 // fail specific gates on purpose. Real pools will not oblige.
-import poolsJson from '../../../../data/pools.mainnet.json'
+import poolsJson from '../../../../data/pools.self-testnet.json'
 import momentumJson from '../../../../data/momentum.json'
 import { brand } from '../config/brand'
-import { gatesFor, mainnetProfile } from '../config/thresholds'
+import { gatesFor, selfTestnetProfile } from '../config/thresholds'
 import { evaluateGates } from '../lib/scoring/gates'
 import { scorePool } from '../lib/scoring/score'
 import { zMomentumSnapshot, zPoolsFixture } from '../types/domain'
@@ -48,7 +48,7 @@ import type {
  * decision would cost. Switching to the self-deployed path means changing this
  * import and the fixture file above, and nothing else in src/.
  */
-const PROFILE = mainnetProfile
+const PROFILE = selfTestnetProfile
 
 const POOLS = zPoolsFixture.parse(poolsJson)
 const MOMENTUM = zMomentumSnapshot.parse(momentumJson)
@@ -270,7 +270,13 @@ export function cartridges(): Array<Cartridge> {
         'provide liquidity without knowing what that means. pick a character, pick a pool, stay in range.',
       locked: false,
     },
-    { id: 'cart-02', title: null, tagline: null, locked: true },
+    {
+      id: 'cart-02',
+      title: brand.CARTRIDGE_02,
+      tagline:
+        'read the live Monad price and call the next ten seconds. the monster is watching.',
+      locked: false,
+    },
     { id: 'cart-03', title: null, tagline: null, locked: true },
   ]
 }

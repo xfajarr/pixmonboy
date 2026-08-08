@@ -11,7 +11,7 @@
  * gets called at the edges, to hand the Chart primitive a number it can plot.
  */
 
-import { isInRange, priceFromBinId } from '../lib/range/bins'
+import { isInRange, poolPriceFromBinId } from '../lib/range/bins'
 import type { Pool } from '../types/domain'
 
 export interface SimState {
@@ -179,7 +179,15 @@ export function createSim(
   _upperBinId: number,
   _amount: number,
 ): SimState {
-  const price = priceFromBinId(pool.activeBinId, pool.binStep)
+  // Decimal-aware, and it has to be: S7 draws this history as a chart and
+  // prints the range edges beside it from `poolPriceFromBinId` too. A chart in
+  // raw ratio next to labels in real prices is one screen telling two stories.
+  const price = poolPriceFromBinId(
+    pool.activeBinId,
+    pool.binStep,
+    pool.tokenX.decimals,
+    pool.tokenY.decimals,
+  )
   return {
     seed: seedFromAddress(pool.pairAddress),
     activeBinId: pool.activeBinId,
@@ -240,7 +248,12 @@ export function step(
 
   const history = [
     ...state.history,
-    priceFromBinId(activeBinId, pool.binStep),
+    poolPriceFromBinId(
+      activeBinId,
+      pool.binStep,
+      pool.tokenX.decimals,
+      pool.tokenY.decimals,
+    ),
   ].slice(-HISTORY_CAP)
 
   // The streak breaks on the tick that leaves the range, not on the one after
