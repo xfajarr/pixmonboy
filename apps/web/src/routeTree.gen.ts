@@ -15,8 +15,10 @@ import { Route as ConsoleCardRouteImport } from './routes/_console/card'
 import { Route as ConsoleCartridgesRouteImport } from './routes/_console/cartridges'
 import { Route as ConsoleDisksRouteImport } from './routes/_console/disks'
 import { Route as ConsoleGalleryRouteImport } from './routes/_console/gallery'
+import { Route as ConsoleTopupRouteImport } from './routes/_console/topup'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as ConsolePlayDifficultyRouteImport } from './routes/_console/play/difficulty'
+import { Route as ConsolePlayMonspellRouteImport } from './routes/_console/play/monspell'
 import { Route as ConsolePlayTrackerRouteImport } from './routes/_console/play/tracker'
 import { Route as ConsolePlayLiveIdRouteImport } from './routes/_console/play/live.$id'
 import { Route as ConsolePlayRangeIdRouteImport } from './routes/_console/play/range.$id'
@@ -51,6 +53,11 @@ const ConsoleGalleryRoute = ConsoleGalleryRouteImport.update({
   path: '/gallery',
   getParentRoute: () => ConsoleRoute,
 } as any)
+const ConsoleTopupRoute = ConsoleTopupRouteImport.update({
+  id: '/topup',
+  path: '/topup',
+  getParentRoute: () => ConsoleRoute,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
@@ -59,6 +66,11 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
 const ConsolePlayDifficultyRoute = ConsolePlayDifficultyRouteImport.update({
   id: '/play/difficulty',
   path: '/play/difficulty',
+  getParentRoute: () => ConsoleRoute,
+} as any)
+const ConsolePlayMonspellRoute = ConsolePlayMonspellRouteImport.update({
+  id: '/play/monspell',
+  path: '/play/monspell',
   getParentRoute: () => ConsoleRoute,
 } as any)
 const ConsolePlayTrackerRoute = ConsolePlayTrackerRouteImport.update({
@@ -88,8 +100,10 @@ export interface FileRoutesByFullPath {
   '/cartridges': typeof ConsoleCartridgesRoute
   '/disks': typeof ConsoleDisksRoute
   '/gallery': typeof ConsoleGalleryRoute
+  '/topup': typeof ConsoleTopupRoute
   '/api/$': typeof ApiSplatRoute
   '/play/difficulty': typeof ConsolePlayDifficultyRoute
+  '/play/monspell': typeof ConsolePlayMonspellRoute
   '/play/tracker': typeof ConsolePlayTrackerRoute
   '/play/live/$id': typeof ConsolePlayLiveIdRoute
   '/play/range/$id': typeof ConsolePlayRangeIdRoute
@@ -101,8 +115,10 @@ export interface FileRoutesByTo {
   '/cartridges': typeof ConsoleCartridgesRoute
   '/disks': typeof ConsoleDisksRoute
   '/gallery': typeof ConsoleGalleryRoute
+  '/topup': typeof ConsoleTopupRoute
   '/api/$': typeof ApiSplatRoute
   '/play/difficulty': typeof ConsolePlayDifficultyRoute
+  '/play/monspell': typeof ConsolePlayMonspellRoute
   '/play/tracker': typeof ConsolePlayTrackerRoute
   '/play/live/$id': typeof ConsolePlayLiveIdRoute
   '/play/range/$id': typeof ConsolePlayRangeIdRoute
@@ -116,8 +132,10 @@ export interface FileRoutesById {
   '/_console/cartridges': typeof ConsoleCartridgesRoute
   '/_console/disks': typeof ConsoleDisksRoute
   '/_console/gallery': typeof ConsoleGalleryRoute
+  '/_console/topup': typeof ConsoleTopupRoute
   '/api/$': typeof ApiSplatRoute
   '/_console/play/difficulty': typeof ConsolePlayDifficultyRoute
+  '/_console/play/monspell': typeof ConsolePlayMonspellRoute
   '/_console/play/tracker': typeof ConsolePlayTrackerRoute
   '/_console/play/live/$id': typeof ConsolePlayLiveIdRoute
   '/_console/play/range/$id': typeof ConsolePlayRangeIdRoute
@@ -131,8 +149,10 @@ export interface FileRouteTypes {
     | '/cartridges'
     | '/disks'
     | '/gallery'
+    | '/topup'
     | '/api/$'
     | '/play/difficulty'
+    | '/play/monspell'
     | '/play/tracker'
     | '/play/live/$id'
     | '/play/range/$id'
@@ -144,8 +164,10 @@ export interface FileRouteTypes {
     | '/cartridges'
     | '/disks'
     | '/gallery'
+    | '/topup'
     | '/api/$'
     | '/play/difficulty'
+    | '/play/monspell'
     | '/play/tracker'
     | '/play/live/$id'
     | '/play/range/$id'
@@ -158,8 +180,10 @@ export interface FileRouteTypes {
     | '/_console/cartridges'
     | '/_console/disks'
     | '/_console/gallery'
+    | '/_console/topup'
     | '/api/$'
     | '/_console/play/difficulty'
+    | '/_console/play/monspell'
     | '/_console/play/tracker'
     | '/_console/play/live/$id'
     | '/_console/play/range/$id'
@@ -216,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsoleGalleryRouteImport
       parentRoute: typeof ConsoleRoute
     }
+    '/_console/topup': {
+      id: '/_console/topup'
+      path: '/topup'
+      fullPath: '/topup'
+      preLoaderRoute: typeof ConsoleTopupRouteImport
+      parentRoute: typeof ConsoleRoute
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -228,6 +259,13 @@ declare module '@tanstack/react-router' {
       path: '/play/difficulty'
       fullPath: '/play/difficulty'
       preLoaderRoute: typeof ConsolePlayDifficultyRouteImport
+      parentRoute: typeof ConsoleRoute
+    }
+    '/_console/play/monspell': {
+      id: '/_console/play/monspell'
+      path: '/play/monspell'
+      fullPath: '/play/monspell'
+      preLoaderRoute: typeof ConsolePlayMonspellRouteImport
       parentRoute: typeof ConsoleRoute
     }
     '/_console/play/tracker': {
@@ -266,7 +304,9 @@ interface ConsoleRouteChildren {
   ConsoleCartridgesRoute: typeof ConsoleCartridgesRoute
   ConsoleDisksRoute: typeof ConsoleDisksRoute
   ConsoleGalleryRoute: typeof ConsoleGalleryRoute
+  ConsoleTopupRoute: typeof ConsoleTopupRoute
   ConsolePlayDifficultyRoute: typeof ConsolePlayDifficultyRoute
+  ConsolePlayMonspellRoute: typeof ConsolePlayMonspellRoute
   ConsolePlayTrackerRoute: typeof ConsolePlayTrackerRoute
   ConsolePlayLiveIdRoute: typeof ConsolePlayLiveIdRoute
   ConsolePlayRangeIdRoute: typeof ConsolePlayRangeIdRoute
@@ -278,7 +318,9 @@ const ConsoleRouteChildren: ConsoleRouteChildren = {
   ConsoleCartridgesRoute: ConsoleCartridgesRoute,
   ConsoleDisksRoute: ConsoleDisksRoute,
   ConsoleGalleryRoute: ConsoleGalleryRoute,
+  ConsoleTopupRoute: ConsoleTopupRoute,
   ConsolePlayDifficultyRoute: ConsolePlayDifficultyRoute,
+  ConsolePlayMonspellRoute: ConsolePlayMonspellRoute,
   ConsolePlayTrackerRoute: ConsolePlayTrackerRoute,
   ConsolePlayLiveIdRoute: ConsolePlayLiveIdRoute,
   ConsolePlayRangeIdRoute: ConsolePlayRangeIdRoute,

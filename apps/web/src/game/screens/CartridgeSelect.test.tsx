@@ -76,7 +76,8 @@ describe('pressing A', () => {
 
   it('on a locked cartridge does not call onInsert', () => {
     const { onInsert } = renderCartridgeSelect()
-    press('RIGHT') // CART 02, locked
+    press('RIGHT') // CART 02
+    press('RIGHT') // CART 03, still locked
     press('A')
     expect(onInsert).not.toHaveBeenCalled()
   })
@@ -112,7 +113,7 @@ describe('clicking with a mouse', () => {
 })
 
 describe('the tagline block', () => {
-  it('keeps a fixed-height container whether the cursor is on the real tagline or the locked placeholder', () => {
+  it('keeps a fixed-height container whether the cursor is on a real tagline or the locked placeholder', () => {
     const { container, getByText } = renderCartridgeSelect()
 
     // CART 01: the real tagline, read from the fixture prop.
@@ -120,7 +121,9 @@ describe('the tagline block', () => {
     expect(realBlock).toBeInTheDocument()
     expect(getByText(CARTS[0].tagline ?? '')).toBeInTheDocument()
 
-    // Move to CART 02, locked: same container class, different text.
+    // Move to CART 03, the one still locked: same container class, different
+    // text. CART 02 is MONSPELL and has a real tagline now.
+    press('RIGHT')
     press('RIGHT')
     const lockedBlock = container.querySelector('.h-10')
     expect(lockedBlock).toBeInTheDocument()

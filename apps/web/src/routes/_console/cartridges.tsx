@@ -25,7 +25,15 @@ function CartridgeSelectRoute() {
     <CartridgeSelect
       disk={disk}
       cartridges={useMemo(() => cartridges(), [])}
-      onInsert={() => navigate({ to: '/play/difficulty' })}
+      onInsert={(cartridgeId) => {
+        // cart-02 is MONSPELL, the live price game, which has its own flow
+        // and does not need a pool pick. cart-01 is STAY IN RANGE.
+        if (cartridgeId === 'cart-02') {
+          navigate({ to: '/play/monspell' })
+        } else {
+          navigate({ to: '/play/difficulty' })
+        }
+      }}
       onBack={() => navigate({ to: '/disks' })}
     />
   )
