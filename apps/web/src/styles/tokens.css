@@ -1,0 +1,142 @@
+/*
+  DAYLIGHT
+  The chosen design system. Spec lives in docs/DESIGN-SYSTEM.md.
+
+  This file is the single source of truth for every visual value in the game
+  screen. src/design/palette.ts mirrors the colours for testing, and
+  src/design/palette.test.ts fails if the two ever drift.
+
+  Two rules govern everything below:
+    1. Every length is a multiple of 4px, except 1px and 2px hairlines.
+    2. Every colour pair that carries meaning has a measured contrast ratio.
+*/
+
+@theme {
+  /* ---------------------------------------------------------------------
+     SPACING
+     Tailwind's base unit is 4px, so p-1 is 4px, p-4 is 16px, and it is not
+     possible to write an off-grid spacing utility by accident.
+     --------------------------------------------------------------------- */
+  --spacing: 4px;
+
+  /* ---------------------------------------------------------------------
+     SURFACES
+     --------------------------------------------------------------------- */
+  --color-screen: #f4f1ff; /* the screen field, faint lavender cast */
+  --color-panel: #ffffff; /* raised panels, dialogs, rows */
+  --color-sunk: #ddd7fe; /* wells, empty meter track, hard shadow */
+
+  /* ---------------------------------------------------------------------
+     INK
+     --------------------------------------------------------------------- */
+  --color-ink: #0e091c; /* 17.6:1 on screen. all body text. */
+  --color-ink-dim: #4a35c4; /*  7.3:1 on screen. labels, units, meta. */
+  --color-ink-invert: #ffffff; /* text on accent and on ink fills */
+
+  /* ---------------------------------------------------------------------
+     EDGES
+     Hard black borders read as moulded plastic on a light field. That is
+     the whole toy illusion, and it is one property.
+     --------------------------------------------------------------------- */
+  --color-edge: #0e091c;
+  --color-edge-soft: #9b87ff; /* 2.6:1. DECORATIVE ONLY, never load bearing. */
+
+  /* ---------------------------------------------------------------------
+     INTERFACE
+     Accent is a FILL colour. As text on the screen field it measures
+     4.31:1 and misses AA, so purple text is always --color-ink-dim.
+     --------------------------------------------------------------------- */
+  --color-accent: #6e54ff; /* selection fill. white on it is 4.8:1. */
+  --color-accent-ink: #ffffff;
+
+  /* ---------------------------------------------------------------------
+     MEANING
+     Gain and loss are the only two numbers a beginner reads, so both are
+     measured against the screen field at body size.
+     --------------------------------------------------------------------- */
+  --color-gain: #1e7a34; /* 4.85:1. the one documented brand deviation. */
+  --color-loss: #c41a1a; /* 5.38:1. negative numbers, DAMAGE. */
+
+  --color-alarm: #ff3b3b; /* 3.18:1. FILL ONLY. the out of range banner. */
+  --color-alarm-ink: #0e091c; /* 5.53:1 on alarm. never white, see the doc. */
+
+  --color-warn: #ffae45; /* 1.66:1. FILL ONLY. NAD-SENSE. */
+  --color-warn-ink: #0e091c; /* 10.6:1 on warn. */
+
+  /* ---------------------------------------------------------------------
+     THE CAST
+     Identical to --color-accent on purpose, which is the one real risk in
+     this system. Separation is by context, never by hue. See the doc.
+     --------------------------------------------------------------------- */
+  --color-character: #6e54ff;
+
+  /* ---------------------------------------------------------------------
+     TYPE
+     Two sizes doing all the work, doubled. Never 12px, never 20px, never
+     24px: a bitmap font at a non-integer multiple resamples and the
+     illusion dies in a way people feel without being able to name it.
+     --------------------------------------------------------------------- */
+  --font-pixel: 'Departure Mono', ui-monospace, 'Roboto Mono', monospace;
+  --font-chrome: 'Roboto Mono', ui-monospace, monospace;
+
+  --text-micro: 8px; /* labels, units, footnotes */
+  --text-micro--line-height: 12px;
+  --text-body: 8px; /* descriptions, dialogue */
+  --text-body--line-height: 16px;
+  --text-value: 16px; /* numbers that matter */
+  --text-value--line-height: 20px;
+  --text-title: 16px; /* screen headers, uppercase */
+  --text-title--line-height: 24px;
+  --text-hero: 32px; /* boot, results, score */
+  --text-hero--line-height: 40px;
+
+  /* ---------------------------------------------------------------------
+     MOTION
+     Stepped for anything on the pixel grid. Real curves are permitted only
+     for full screen effects, which are not on the grid.
+     --------------------------------------------------------------------- */
+  --ease-sprite-2: steps(2, end);
+  --ease-sprite-4: steps(4, end);
+  --ease-sprite-8: steps(8, end);
+  --ease-out-screen: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-screen: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* No --ease-in. It delays the first movement, which is the exact moment
+     the user is watching, and it reads as lag. */
+
+  /* ---------------------------------------------------------------------
+     DEPTH
+     One shadow. Hard offset, no blur. Sticker, not glass.
+     --------------------------------------------------------------------- */
+  --shadow-hard: 2px 2px 0 0 var(--color-sunk);
+  --shadow-sunk: inset 1px 1px 0 0 var(--color-sunk);
+}
+
+/*
+  The screen font. Self-hosted, SIL OFL, 22KB woff2.
+
+  font-display: block because a pixel font that swaps mid-render breaks the
+  illusion worse than a blank frame does.
+*/
+@font-face {
+  font-family: 'Departure Mono';
+  src:
+    url('/fonts/DepartureMono-Regular.woff2') format('woff2'),
+    url('/fonts/DepartureMono-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  /* The logical screen. Never responsive. Only the scale factor changes. */
+  --screen-w: 480px;
+  --screen-h: 320px;
+  --safe: 12px; /* nothing touches the bezel */
+
+  /* Press feedback. 1px down and right, not a scale. Scaling a pixel panel
+     resamples its border and the crisp edge smears for the whole press. */
+  --press-x: 1px;
+  --press-y: 1px;
+  --press-ms: 80ms;
+}

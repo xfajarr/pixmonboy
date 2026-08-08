@@ -1,0 +1,197 @@
+@import 'tailwindcss';
+@import './styles/tokens.css';
+@import './console/console.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/*
+  THE VIEWPORT IS THE STAGE, EXACTLY.
+
+  `min-height` let the document grow past the visual viewport, and the console
+  is scaled to fit the stage it measures. A stage taller or wider than what the
+  phone is actually showing produces a correct calculation of the wrong number:
+  the console comes out small and floats in the middle with dead space on every
+  side, which is precisely how it rendered on a real phone over the tunnel.
+
+  Hard `height: 100%` plus no document scroll means the stage cannot be
+  anything other than the screen. `overscroll-behavior: none` stops the
+  rubber-band drag on iOS, which momentarily changes the visual viewport and
+  would otherwise make the console breathe while a finger is on the D-pad.
+*/
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  /* The console sits on a dark desk. The screen is the only bright thing. */
+  background: var(--color-ink);
+  color: var(--color-ink);
+  font-family: var(--font-chrome);
+}
+
+/* Pixel art is never resampled. This is not a preference, it is the whole
+   fixed grid in one declaration. */
+img,
+canvas {
+  image-rendering: pixelated;
+}
+
+/* Every pressable element confirms physically, instantly. 1px down and right,
+   never a scale: scaling a pixel panel resamples its border. */
+.pressable:active {
+  transform: translate(var(--press-x), var(--press-y));
+  transition: transform var(--press-ms);
+}
+
+/*
+  MOTION.
+
+  Everything on the pixel grid is stepped. Real curves are only allowed on full
+  screen effects and on the console shell, which are not on the grid.
+*/
+
+/* Two frame character loop at 8fps. steps(2) walks exactly two frames and
+   never lands between them, which a percentage-based animation would. */
+@keyframes sprite-pair {
+  from {
+    background-position-x: var(--sprite-from);
+  }
+  to {
+    background-position-x: var(--sprite-to);
+  }
+}
+
+.sprite-pair {
+  animation: sprite-pair 0.25s steps(2, end) infinite;
+}
+
+/* The jump. The whole mini-game input is one button, so the one button has to
+   visibly do something: a frame swap alone reads as a glitch rather than as a
+   jump. Out and back on --ease-out-screen, because the character leaves the
+   ground fast and lands soft, and ease-in would delay the exact moment the
+   player pressed for. */
+@keyframes sprite-jump {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-16px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.sprite-jump {
+  animation: sprite-jump 0.3s var(--ease-out-screen) 1;
+}
+
+/* The block caret. Two states, so steps(2). */
+@keyframes caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Linear, always. Any easing on a continuous scroll produces a visible pulse,
+   and a pulsing warning reads as a rendering bug rather than as urgency. */
+@keyframes marquee {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+/* NAD-SENSE. Two states, alternating, while the state is active. */
+@keyframes nad-pulse {
+  from {
+    box-shadow: inset 0 0 0 4px var(--color-warn);
+  }
+  to {
+    box-shadow: inset 0 0 0 0 var(--color-warn);
+  }
+}
+
+.nad-pulse {
+  animation: nad-pulse 0.6s steps(2, end) infinite alternate;
+}
+
+/* S5's radar. Pure decoration: a map with a sweeping radar reads as
+   "scanning", a static scatter reads as "spreadsheet". Nothing on the tracker
+   depends on the sweep's angle, which is what makes it safe to freeze under
+   reduced motion below without losing any information the screen is stating,
+   unlike `.nad-pulse` and `.sprite-pair`, which are read for meaning. */
+@keyframes radar-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep-hand {
+  animation: radar-sweep 3s linear infinite;
+}
+
+/* S1's memory card sliding into its slot. Six steps, because the whole system
+   is stepped on the pixel grid and a smooth 60fps slide reads as a different
+   product than the one around it. It runs ONCE: this is a screen a player sees
+   for a few seconds, and a looping card would turn the most important screen in
+   the product into a fidget.
+
+   The transform here is the ONLY transform on its element. The element that
+   centres the card is its parent. Two transforms never share an element, since
+   `transform` is one property and the animation would replace the positioning:
+   that is a logged bug in this repo, from a sprite that hopped diagonally off a
+   chart. */
+@keyframes card-insert {
+  0% {
+    transform: translateY(-24px);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.card-insert {
+  animation: card-insert 0.5s steps(6, end) 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Everything that moves without the player asking it to.
+     `.sprite-pair` is here because S7 runs a two frame loop continuously for
+     the length of a session. Stopping the animation parks the sprite on frame
+     0 of whichever pair it was playing, which is the correct still for that
+     state. The screen used to substitute a different FRAME instead, and that
+     is how a character ended up smiling while the price walked off the edge:
+     a motion preference must never change what a screen is saying. */
+  .boot-sequence,
+  .card-insert,
+  .nad-pulse,
+  .sprite-pair,
+  .radar-sweep-hand {
+    animation: none !important;
+  }
+}
