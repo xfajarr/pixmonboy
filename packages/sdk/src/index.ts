@@ -19,9 +19,16 @@ export {
   VERIFIED_ON,
 } from './chains'
 
-export type { ChainConfig, ChainContracts, ChainKey } from './chains'
+export type {
+  ChainConfig,
+  ChainContracts,
+  ChainKey,
+  TestTokens,
+} from './chains'
 
 export { diskRegistryAbi } from './abi/disk-registry'
+export { lbRouterAbi } from './abi/lb-router'
+export { testTokenAbi } from './abi/test-token'
 
 export {
   COLD_SLOT_SURCHARGE,

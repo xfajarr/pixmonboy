@@ -1,0 +1,27 @@
+[profile.default]
+src = 'src'
+out = 'out'
+libs = ['lib']
+script = 'script'
+
+# EVERY ONE OF THESE FOUR IS COPIED FROM joe-v2's OWN foundry.toml, ON PURPOSE.
+#
+# Liquidity Book is not code we wrote and not code we want to debug. It compiles
+# and it is audited under exactly this configuration, so matching it removes a
+# whole class of "it built but behaves differently" problem before it starts.
+#
+# `paris` is the load-bearing one. Shanghai introduced PUSH0 and Cancun added
+# transient storage; targeting either would emit opcodes whose support on Monad
+# we would then have to verify ourselves, and the reward for that work is zero
+# because joe-v2 does not use them. Paris output runs on every EVM chain that
+# has ever existed, which is the correct amount of risk for a dependency.
+solc_version = "0.8.20"
+evm_version = 'paris'
+optimizer = true
+optimizer_runs = 800
+
+# LBPair is a large contract and lands near EIP-170's 24,576 byte ceiling, so
+# check it with `forge build --sizes` before any deploy. It is a CLI flag rather
+# than a setting here on purpose: `sizes` is not a foundry.toml key, and writing
+# it as one is accepted silently as an unknown profile field, which reads like a
+# guard rail while doing nothing at all.

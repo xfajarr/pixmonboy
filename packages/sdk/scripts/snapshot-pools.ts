@@ -56,19 +56,66 @@ import { dirname, resolve } from 'node:path'
 import { createPublicClient, defineChain, http, erc20Abi } from 'viem'
 
 import { chains } from '../src/chains'
+import type { ChainKey } from '../src/chains'
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
-const OUT = resolve(REPO, 'data/pools.mainnet.json')
+
+/**
+ * Which chain to snapshot. `mainnet` unless told otherwise.
+ *
+ *   bun run --cwd packages/sdk snapshot:pools            LFJ's book on mainnet
+ *   bun run --cwd packages/sdk snapshot:pools testnet    OUR book on testnet
+ *
+ * The two are read by identical code on purpose. Liquidity Book is the same
+ * contracts either way, so a testnet path with its own reader would be a second
+ * implementation to keep honest; the only things that differ are which factory
+ * to ask and which file to write.
+ */
+const CHAIN_KEY: ChainKey =
+  process.argv[2] === 'testnet' ? 'testnet' : 'mainnet'
+
+/**
+ * `self-testnet` is the schema's name for a book we deployed ourselves
+ * (apps/web/src/types/domain.ts, `zPoolsFixture`). It is a different claim from
+ * `mainnet` and the file says which one it is, so a reader never has to infer
+ * whether these pools are LFJ's or ours.
+ */
+const PROFILE = CHAIN_KEY === 'testnet' ? 'self-testnet' : 'mainnet'
+
+// Not `.fixture.json`. That suffix is taken by the hand-written placeholder set
+// the tests use, and overwriting it would delete the pools that fail specific
+// gates on purpose. This file is read from chain; that one never was.
+const OUT = resolve(REPO, `data/pools.${PROFILE}.json`)
 const REFERENCE_BIN_ID = 8_388_608
 
 /** Below this a pool is noise on a tracker, not a choice. */
 const MIN_TVL_USD = 250
 
+/**
+ * How far above the measured state floor it is safe to probe.
+ *
+ * The floor is where state STOPS being served, and it advances continuously as
+ * the node prunes. Monad produces roughly 150 blocks a minute and a snapshot
+ * run takes several, so a probe aimed at the floor measured at startup is aimed
+ * at a block that no longer exists by the time it fires. 50,000 blocks is about
+ * five hours of headroom, which is far longer than any run and utterly small
+ * against a window measured in millions.
+ */
+const FLOOR_SAFETY_BLOCKS = 50_000n
+
 /** Bins either side of active to scan for the concentration figure. */
 const CONCENTRATION_SPAN = 12
 
-/** Priced at one dollar, so a reserve can be valued without an oracle. */
-const STABLES = new Set(['USDC', 'AUSD', 'USDT0', 'USDT', 'USD1'])
+/**
+ * Priced at one dollar, so a reserve can be valued without an oracle.
+ *
+ * `tUSD` is ours (contracts/src/TestToken.sol) and is a dollar by DEFINITION
+ * rather than by market: it is the stable leg of every pair we seeded on
+ * testnet, and nothing trades it against anything else. Listing it here is what
+ * lets `tvlUsd` be computed at all on that chain, and the profile name in the
+ * output file is what stops a reader mistaking those dollars for mainnet ones.
+ */
+const STABLES = new Set(['USDC', 'AUSD', 'USDT0', 'USDT', 'USD1', 'tUSD'])
 
 const factoryAbi = [
   {
@@ -132,7 +179,26 @@ const pairAbi = [
   },
 ] as const
 
-const config = chains.mainnet
+const config = chains[CHAIN_KEY]
+
+/**
+ * The endpoint to read from, keyed override first.
+ *
+ * Same rule and same variable name as `apps/api/src/rpc.ts`: the public
+ * endpoint is the checked-in default in chains.ts, and a keyed QuikNode url
+ * lives in the environment because chains.ts is committed and the web bundle
+ * reads it. This script is a build-time tool that never ships to a browser, so
+ * it is free to use the fast endpoint, and it wants to: this run makes hundreds
+ * of sequential `eth_getCode` calls bisecting for pool birthdays, and the
+ * public endpoint rate-limits long before it finishes.
+ */
+const RPC_URL =
+  (CHAIN_KEY === 'testnet' ? process.env.TESTNET_RPC_URL : undefined) ||
+  config.rpcUrl
+
+console.log(
+  `reading ${CHAIN_KEY} via ${RPC_URL === config.rpcUrl ? 'the public endpoint' : 'the keyed endpoint from TESTNET_RPC_URL'}`,
+)
 const monad = defineChain({
   id: config.id,
   name: config.name,
@@ -141,7 +207,7 @@ const monad = defineChain({
     symbol: config.nativeSymbol,
     decimals: 18,
   },
-  rpcUrls: { default: { http: [config.rpcUrl] } },
+  rpcUrls: { default: { http: [RPC_URL] } },
 })
 const client = createPublicClient({
   chain: monad,
@@ -188,22 +254,49 @@ async function creationBlock(
   floor: bigint,
   head: bigint,
 ): Promise<bigint | null> {
-  const atFloor = await client.getCode({ address, blockNumber: floor })
-  if (atFloor && atFloor !== '0x') return null
+  // NEVER PROBE AT THE FLOOR ITSELF. The floor is the EDGE of the pruning
+  // window and the window slides while this script runs: Monad produces roughly
+  // 150 blocks a minute, so the exact block that answered during `stateFloor`
+  // has usually been pruned by the time this loop reaches it, and the probe
+  // fails with a bare "Invalid parameters" that reads like a bug in the call.
+  // That is what it did on the first testnet run: four pairs, four skips.
+  //
+  // The margin costs one bisection step and buys a floor that is still valid
+  // several minutes later. It is deliberately large against the window, which
+  // is millions of blocks, and small against nothing that matters.
+  const safeFloor = floor + FLOOR_SAFETY_BLOCKS
+  if (safeFloor >= head) return null
 
-  let low = floor
+  // A read that throws is an UNKNOWN birthday, not a young pool. Returning null
+  // makes the caller fall back to the floor timestamp, which the pair provably
+  // predates, so an RPC that prunes mid-run costs precision and never invents a
+  // pool that is newer than it really is.
+  const codeAt = async (blockNumber: bigint): Promise<string | null> => {
+    try {
+      return (await client.getCode({ address, blockNumber })) ?? '0x'
+    } catch {
+      return null
+    }
+  }
+
+  const atFloor = await codeAt(safeFloor)
+  if (atFloor === null) return null
+  if (atFloor !== '0x') return null
+
+  let low = safeFloor
   let high = head
   while (low < high) {
     const mid = (low + high) / 2n
-    const code = await client.getCode({ address, blockNumber: mid })
-    if (!code || code === '0x') low = mid + 1n
+    const code = await codeAt(mid)
+    if (code === null) return null
+    if (code === '0x') low = mid + 1n
     else high = mid
   }
   return low
 }
 
 const FACTORY = config.contracts.lbFactory
-if (!FACTORY) throw new Error('mainnet lbFactory is null in chains.ts')
+if (!FACTORY) throw new Error(`${CHAIN_KEY} lbFactory is null in chains.ts`)
 const FACTORY_PROBE: `0x${string}` = FACTORY
 
 function priceFromBinId(
@@ -432,7 +525,7 @@ for (const pair of addresses) {
 pools.sort((a, b) => b.tvlUsd - a.tvlUsd)
 
 const snapshot = {
-  profile: 'mainnet',
+  profile: PROFILE,
   chainId: config.id,
   capturedAt: new Date(headTimestamp * 1000).toISOString(),
   capturedAtBlock: Number(head),

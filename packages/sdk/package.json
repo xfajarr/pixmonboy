@@ -12,7 +12,8 @@
     "verify:addresses": "bun run scripts/verify-addresses.ts",
     "record:deployment": "bun run scripts/record-deployment.ts",
     "generate:abi": "bun run scripts/generate-abi.ts",
-    "snapshot:pools": "bun run scripts/snapshot-pools.ts"
+    "snapshot:pools": "bun run scripts/snapshot-pools.ts",
+    "generate:lb-abi": "bun run scripts/generate-lb-abi.ts"
   },
   "devDependencies": {
     "@types/bun": "1.3.14"

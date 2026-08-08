@@ -15,7 +15,7 @@
  */
 
 /** The date every address in this file was last checked with `cast code`. */
-export const VERIFIED_ON = '2026-08-07'
+export const VERIFIED_ON = '2026-08-08'
 
 export type ChainKey = 'mainnet' | 'testnet'
 
@@ -24,9 +24,38 @@ export interface ChainConfig {
   id: number
   name: string
   rpcUrl: string
+  /**
+   * Websocket RPC, for real-time reads (pending transactions, new blocks,
+   * live bin updates). Ours is Monad's public endpoint by default and can be
+   * overridden server-side with `TESTNET_RPC_WS_URL`; see `chains.ts` note on
+   * why the keyed QuikNode url never lives in this file.
+   */
+  rpcWssUrl: string | null
   explorer: string
   nativeSymbol: string
   contracts: ChainContracts
+  /**
+   * The ERC20s our own seeded pairs are denominated in. Ours, never canonical:
+   * we minted them so the testnet pairs would have something to hold, and the
+   * seeding script looks them up by name here. Optional on mainnet, where the
+   * demo reads existing pools instead of creating them.
+   */
+  testTokens?: TestTokens
+}
+
+export interface TestTokens {
+  /** The stable leg every seeded pair quotes against. 6 decimals. */
+  tusd: `0x${string}`
+  /** Stand-in for MON as a POOL leg. Not WMON: see `wrappedNative` below. */
+  tmon: `0x${string}`
+  /**
+   * Stand-in for BTC, at 8 decimals like the real thing.
+   *
+   * It replaced a "tCHOG" that was priced by hand. Both of the volatile legs
+   * here now track a token whose price is READ from `data/pools.mainnet.json`,
+   * so no dollar figure in this build rests on a number somebody picked.
+   */
+  tbtc: `0x${string}`
 }
 
 export interface ChainContracts {
@@ -94,6 +123,7 @@ export const mainnet: ChainConfig = {
   id: 143,
   name: 'Monad',
   rpcUrl: 'https://rpc.monad.xyz',
+  rpcWssUrl: 'wss://rpc.monad.xyz',
   explorer: 'https://monadscan.com',
   nativeSymbol: 'MON',
   contracts: {
@@ -111,7 +141,13 @@ export const mainnet: ChainConfig = {
 }
 
 /**
- * There is no Liquidity Book here, and there is no wrapped MON either.
+ * There was no Liquidity Book here, and no wrapped MON either. Now there is,
+ * because we deployed both on 2026-08-08.
+ *
+ * READ THE HISTORY BELOW BEFORE TRUSTING ANY LB ADDRESS ON THIS CHAIN. The
+ * addresses in `contracts` are OURS, from contracts/script/DeployLiquidityBook
+ * .s.sol, and they are not the ones LFJ publishes. The published ones are still
+ * empty and still must not be used.
  *
  * `SMART-CONTRACTS.md` section 0 established the first half: the LFJ docs and
  * the `monad-crypto/protocols` registry both publish LB addresses for chain
@@ -131,13 +167,33 @@ export const mainnet: ChainConfig = {
  * ERC-4337 EntryPoints. Thirteen of fourteen canonical contracts have code.
  * WMON is the one that does not.
  *
- * What this means for the product, plainly: an LP position on testnet is not
+ * What this meant for the product, plainly: an LP position on testnet was not
  * possible without first deploying joe-v2 AND a wrapped-native AND test tokens
  * AND seeding liquidity. That is strictly more than section 12.5's path B
- * assumed, so its "two to three hours, five realistic" no longer holds.
+ * assumed, so its "two to three hours, five realistic" did not hold.
  *
- * `diskRegistry` does NOT need any of that. It touches no LB, no WMON, and no
- * liquidity, so it deploys here for the price of faucet gas and satisfies the
+ * WHAT WE DID ABOUT IT
+ *
+ * All four, on 2026-08-08, from `contracts/`:
+ *
+ *   WMON.sol            our own wrapped native, since IWNATIVE is a constructor
+ *                       argument of LBRouter and cannot be filled in later
+ *   TestToken.sol       tUSD (6dp), tMON and tCHOG (18dp), openly mintable
+ *   LBFactory/Pair/     joe-v2 v2.2 at commit 067c6cc, vendored under
+ *   Router/Quoter       contracts/lib/joe-v2 and compiled unmodified
+ *   4 seeded pairs      tMON/tUSD at bin steps 5, 25 and 100, plus tCHOG/tUSD
+ *                       at 25, each funded through the router
+ *
+ * The whole sequence was rehearsed on a local anvil before it touched 10143,
+ * which is how we found that a single fee preset does not work across bin
+ * steps: the variable fee is quadratic in bin step and bin step 100 exceeded
+ * `Constants.MAX_FEE` by 5x. See `_presetFor` in the deploy script.
+ *
+ * Cost: 26.8M gas, about 4.7 MON of faucet balance, spread over 23 transactions
+ * with the largest single one at 5.4M gas against Monad's 30M ceiling.
+ *
+ * `diskRegistry` needed none of that. It touches no LB, no WMON, and no
+ * liquidity, so it deployed here for the price of faucet gas and satisfies the
  * submission's "deployed on Monad" on its own.
  */
 export const testnet: ChainConfig = {
@@ -145,19 +201,51 @@ export const testnet: ChainConfig = {
   id: 10143,
   name: 'Monad Testnet',
   rpcUrl: 'https://testnet-rpc.monad.xyz',
+  rpcWssUrl: 'wss://testnet-rpc.monad.xyz',
   explorer: 'https://testnet.monadscan.com',
   nativeSymbol: 'MON',
   contracts: {
     multicall3: '0xcA11bde05977b3631167028862bE2a173976CA11',
-    wrappedNative: null,
+    // OURS, not the registry's. The canonical testnet WMON documented above
+    // holds no bytecode; this one is contracts/src/WMON.sol, deployed by
+    // contracts/script/DeployLiquidityBook.s.sol.
+    wrappedNative: '0x623aC037C6BA42b367e3278962729bC486E0566d',
+    // The chain's real USDC, which does have code and which NOTHING in this
+    // build uses. Our pools quote against tUSD below, because a stable leg we
+    // cannot mint is a stable leg we cannot seed a pool with. Kept because it
+    // is true and because a future integration may want it.
     usdc: '0x534b2f3A21130d7a60830c2Df862319e593943A3',
-    lbFactory: null,
-    lbRouter: null,
-    lbQuoter: null,
+    // ---- our own joe-v2, deployed 2026-08-08 --------------------------------
+    //
+    // SECOND DEPLOYMENT. The first one is still on chain at 0x14460bf0… and is
+    // abandoned: its pools were seeded at a made-up price of two dollars per
+    // MON, when five independent LFJ mainnet pools put MON at $0.0209. Every
+    // dollar figure downstream inherited that error, so the fix had to be a
+    // redeploy — a pool's price is fixed at `createLBPair` and cannot be
+    // rewritten afterwards. Do not use the old addresses for anything.
+    lbFactory: '0x19444deb5b24d57F54D5dC8C2a9CCfeFC185790E',
+    lbRouter: '0x17dc9CF08ceEF1B44AD0ECf01E79a8A6Ab138E0a',
+    lbQuoter: '0xBB497F0b3c4Ae63E88a130163abf746e1DD85087',
+    // LFJ's read helper is a separate deployment we did not make. Null, because
+    // the snapshot script reads pairs directly and never needed it.
     lbDexLens: null,
-    lbDemoPair: null,
+    // tMON/tUSD at bin step 5, the deepest of the four seeded pools.
+    lbDemoPair: '0xA3a7452c414f7cAc68fa1F9c03C980A35a1afEF3',
     pythPriceFeed: '0x2880aB155794e7179c9eE2e38200202908C17B43',
     diskRegistry: '0x5b23e4da5861213c980052f1a174ca5cca8f38d6',
+  },
+  /**
+   * The tokens our own pools are denominated in.
+   *
+   * Not in `ChainContracts` because they are not canonical anything: they are
+   * three ERC20s we minted so the pairs would have something to hold. They live
+   * here rather than in the pool snapshot because the seeding script needs them
+   * by name, and the snapshot records per-pool token addresses on its own.
+   */
+  testTokens: {
+    tusd: '0x69fD07A282eACa193d257Eb7bF7e0ce8e07dC872',
+    tmon: '0xde16B034034d431E6E3480c552EE183e936893aa',
+    tbtc: '0xEa8DD1b372764E06a7c87CB6842c1CB5850083D3',
   },
 }
 

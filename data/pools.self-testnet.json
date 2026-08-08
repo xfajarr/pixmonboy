@@ -1,0 +1,107 @@
+{
+  "profile": "self-testnet",
+  "chainId": 10143,
+  "capturedAt": "2026-08-08T08:54:49.000Z",
+  "capturedAtBlock": 51910379,
+  "stateFloorBlock": 33295220,
+  "stateWindowDays": 78.29,
+  "source": {
+    "pairAddress": "chain",
+    "tokenX": "chain",
+    "tokenY": "chain",
+    "binStep": "chain",
+    "activeBinId": "chain",
+    "tvlUsd": "chain, reserves priced off the active bin against a stable leg",
+    "createdAt": "chain, bisected inside the state window. When the pair already existed at the floor this is the floor timestamp, which the pair provably predates, so it is an upper bound on the birthday and therefore a lower bound on age.",
+    "createdAtIsExact": "chain. False means the pool is AT LEAST this old and possibly much older.",
+    "lpConcentration": "chain, busiest bin share across the active neighbourhood",
+    "volume24hUsd": "NOT READ. eth_getLogs is capped at 100 blocks on this RPC.",
+    "realizedVol24h": "NOT READ. Needs price history the same cap forbids."
+  },
+  "pools": [
+    {
+      "pairAddress": "0xA3a7452c414f7cAc68fa1F9c03C980A35a1afEF3",
+      "tokenX": {
+        "address": "0xde16B034034d431E6E3480c552EE183e936893aa",
+        "symbol": "tMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x69fD07A282eACa193d257Eb7bF7e0ce8e07dC872",
+        "symbol": "tUSD",
+        "decimals": 6
+      },
+      "binStep": 5,
+      "activeBinId": 8325592,
+      "tvlUsd": 48000,
+      "volume24hUsd": null,
+      "createdAt": 1786179143,
+      "createdAtIsExact": true,
+      "lpConcentration": 0.047619111810338774,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0x010Cb4a68992467749C15C037f2cF4B16918C7d2",
+      "tokenX": {
+        "address": "0xde16B034034d431E6E3480c552EE183e936893aa",
+        "symbol": "tMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x69fD07A282eACa193d257Eb7bF7e0ce8e07dC872",
+        "symbol": "tUSD",
+        "decimals": 6
+      },
+      "binStep": 25,
+      "activeBinId": 8375993,
+      "tvlUsd": 6006,
+      "volume24hUsd": null,
+      "createdAt": 1786179154,
+      "createdAtIsExact": true,
+      "lpConcentration": 0.047666300409959124,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0xf2b85aEDB3147DF161a66Fc4B588c60ff314b4C1",
+      "tokenX": {
+        "address": "0xEa8DD1b372764E06a7c87CB6842c1CB5850083D3",
+        "symbol": "tBTC",
+        "decimals": 8
+      },
+      "tokenY": {
+        "address": "0x69fD07A282eACa193d257Eb7bF7e0ce8e07dC872",
+        "symbol": "tUSD",
+        "decimals": 6
+      },
+      "binStep": 25,
+      "activeBinId": 8391199,
+      "tvlUsd": 1199,
+      "volume24hUsd": null,
+      "createdAt": 1786179174,
+      "createdAtIsExact": true,
+      "lpConcentration": 0.0476512964549743,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0x51bed924DE561b0DEc47Ca4d9585F346FAa28503",
+      "tokenX": {
+        "address": "0xde16B034034d431E6E3480c552EE183e936893aa",
+        "symbol": "tMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x69fD07A282eACa193d257Eb7bF7e0ce8e07dC872",
+        "symbol": "tUSD",
+        "decimals": 6
+      },
+      "binStep": 100,
+      "activeBinId": 8385443,
+      "tvlUsd": 602,
+      "volume24hUsd": null,
+      "createdAt": 1786179165,
+      "createdAtIsExact": true,
+      "lpConcentration": 0.0477935989825628,
+      "realizedVol24h": null
+    }
+  ]
+}
