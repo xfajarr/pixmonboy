@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import type { RefObject } from 'react'
 
 /**
@@ -22,7 +22,27 @@ export function useFitScale(
 ): number {
   const [scale, setScale] = useState(1)
 
-  useEffect(() => {
+  /**
+   * LAYOUT effect, and the distinction is the whole bug.
+   *
+   * This ran as a plain `useEffect` whose only dependencies were the two ref
+   * OBJECTS, which never change. So it ran exactly once, and if either
+   * `.current` happened to be null at that moment it took the `return` below
+   * and never tried again: no ResizeObserver, no visualViewport listener,
+   * nothing. The scale stayed at its initial 1 for the life of the page.
+   *
+   * What that looks like is not "the scale is slightly off". On any viewport
+   * shorter than the console it means the shell is drawn at 1x and CLIPPED by
+   * the stage — the bottom of the body, the key legend, and part of the D-pad
+   * simply cut off — while the correct answer of 0.9 sat one branch away. It
+   * was measured doing exactly that: box 536x603 against 1248x545 available,
+   * ladder correctly picking nothing, continuous correctly computing 0.904,
+   * and the applied transform still reading scale(1).
+   *
+   * `useLayoutEffect` runs after the DOM is committed, so both refs are
+   * populated by definition, and the observers actually get attached.
+   */
+  useLayoutEffect(() => {
     const stage = stageRef.current
     const box = boxRef.current
     if (!stage || !box) return
@@ -65,11 +85,17 @@ export function useFitScale(
     const vv = window.visualViewport
     vv?.addEventListener('resize', measure)
     window.addEventListener('orientationchange', measure)
+    // Plain window resize too. `visualViewport` covers the mobile URL bar and
+    // the ResizeObserver covers content changes, but neither is guaranteed to
+    // fire for an ordinary desktop window drag in every engine, and that is the
+    // most common way this console is resized while somebody is looking at it.
+    window.addEventListener('resize', measure)
 
     return () => {
       observer.disconnect()
       vv?.removeEventListener('resize', measure)
       window.removeEventListener('orientationchange', measure)
+      window.removeEventListener('resize', measure)
     }
   }, [stageRef, boxRef])
 

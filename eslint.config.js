@@ -69,6 +69,14 @@ export default [
       'contracts/**',
       'dist/**',
       'apps/*/dist/**',
+      // Nitro writes the deployable bundle here on `bun run build`. It is
+      // gitignored but not eslint-ignored, so the first build on a clean
+      // checkout turned `bun run lint` into a wall of parser errors about
+      // generated files that tsconfig has never heard of.
+      '.vercel/**',
+      'apps/*/.vercel/**',
+      '.output/**',
+      'apps/*/.output/**',
       'apps/web/src/routeTree.gen.ts',
     ],
   },
