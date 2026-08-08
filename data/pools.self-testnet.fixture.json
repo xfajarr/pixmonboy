@@ -1,0 +1,48 @@
+{
+  "profile": "self-testnet",
+  "capturedAt": "2026-08-02T09:00:00.000Z",
+  "pools": [
+    {
+      "pairAddress": "0xaaaa0000000000000000000000000000000000aa",
+      "tokenX": {
+        "address": "0xbbbb0000000000000000000000000000000000bb",
+        "symbol": "tCHOG",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0xcccc0000000000000000000000000000000000cc",
+        "symbol": "tUSD",
+        "decimals": 18
+      },
+      "binStep": 25,
+      "activeBinId": 8388712,
+      "tvlUsd": 4200,
+      "volume24hUsd": 1900,
+      "createdAt": 1785000000,
+      "lpConcentration": 0.95,
+      "realizedVol24h": 0.9,
+      "createdAtIsExact": true
+    },
+    {
+      "pairAddress": "0xdddd0000000000000000000000000000000000dd",
+      "tokenX": {
+        "address": "0xeeee0000000000000000000000000000000000ee",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0xcccc0000000000000000000000000000000000cc",
+        "symbol": "tUSD",
+        "decimals": 18
+      },
+      "binStep": 25,
+      "activeBinId": 8388601,
+      "tvlUsd": 9800,
+      "volume24hUsd": 2400,
+      "createdAt": 1784990000,
+      "lpConcentration": 0.95,
+      "realizedVol24h": 0.35,
+      "createdAtIsExact": true
+    }
+  ]
+}

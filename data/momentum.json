@@ -1,0 +1,10 @@
+{
+  "computedAt": "2026-08-02T02:00:00.000Z",
+  "windowHours": 24,
+  "entries": [
+    { "symbol": "CHOG", "score": 78, "mentions": 412, "velocity": 2.3 },
+    { "symbol": "WMON", "score": 61, "mentions": 1840, "velocity": 0.4 },
+    { "symbol": "YAKI", "score": 88, "mentions": 903, "velocity": 4.1 },
+    { "symbol": "DAK", "score": 34, "mentions": 61, "velocity": -0.8 }
+  ]
+}

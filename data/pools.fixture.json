@@ -1,0 +1,310 @@
+{
+  "profile": "mainnet",
+  "capturedAt": "2026-08-02T09:00:00.000Z",
+  "pools": [
+    {
+      "pairAddress": "0x1111111111111111111111111111111111111111",
+      "tokenX": {
+        "address": "0x2222222222222222222222222222222222222222",
+        "symbol": "CHOG",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 25,
+      "activeBinId": 8388712,
+      "tvlUsd": 412000,
+      "volume24hUsd": 268000,
+      "createdAt": 1753000000,
+      "lpConcentration": 0.41,
+      "realizedVol24h": 0.94,
+      "createdAtIsExact": true
+    },
+    {
+      "pairAddress": "0x3333333333333333333333333333333333333333",
+      "tokenX": {
+        "address": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 10,
+      "activeBinId": 8388601,
+      "tvlUsd": 890000,
+      "volume24hUsd": 305000,
+      "createdAt": 1748000000,
+      "lpConcentration": 0.22,
+      "realizedVol24h": 0.38,
+      "createdAtIsExact": true
+    },
+    {
+      "pairAddress": "0x4444444444444444444444444444444444444444",
+      "tokenX": {
+        "address": "0x5555555555555555555555555555555555555555",
+        "symbol": "YAKI",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "binStep": 50,
+      "activeBinId": 8388904,
+      "tvlUsd": 210000,
+      "volume24hUsd": 1180000,
+      "createdAt": 1756400000,
+      "lpConcentration": 0.68,
+      "realizedVol24h": 2.1,
+      "createdAtIsExact": true
+    },
+    {
+      "pairAddress": "0x6666666666666666666666666666666666666666",
+      "tokenX": {
+        "address": "0x7777777777777777777777777777777777777777",
+        "symbol": "DAK",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 25,
+      "activeBinId": 8388550,
+      "tvlUsd": 38000,
+      "volume24hUsd": 12000,
+      "createdAt": 1784800000,
+      "lpConcentration": null,
+      "realizedVol24h": null,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "S5 widen. Bottom-right: safe and calm, Molandak's territory. Deep, ancient, MON-quoted. Momentum absent for NSTR, so this exercises momentumDegraded on a PASSING pool.",
+      "pairAddress": "0x006c006c006c006c006c006c006c006c006c006c",
+      "tokenX": {
+        "address": "0x0068006800680068006800680068006800680068",
+        "symbol": "NSTR",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x0064006400640064006400640064006400640064",
+        "symbol": "MON",
+        "decimals": 18
+      },
+      "binStep": 15,
+      "activeBinId": 8388640,
+      "tvlUsd": 2600000,
+      "volume24hUsd": 50000,
+      "createdAt": 1751101200,
+      "lpConcentration": 0.1,
+      "realizedVol24h": 0.12,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "Safe-side middle: deep and quiet but younger and thinner than NSTR/MON, so it lands to the left of it rather than on top of it. Momentum absent for KEYC too.",
+      "pairAddress": "0x006d006d006d006d006d006d006d006d006d006d",
+      "tokenX": {
+        "address": "0x0069006900690069006900690069006900690069",
+        "symbol": "KEYC",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x0065006500650065006500650065006500650065",
+        "symbol": "USDT0",
+        "decimals": 6
+      },
+      "binStep": 20,
+      "activeBinId": 8388580,
+      "tvlUsd": 600000,
+      "volume24hUsd": 130000,
+      "createdAt": 1777885200,
+      "lpConcentration": 0.38,
+      "realizedVol24h": 0.32,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "Top-left extreme: Mouch's outer edge, and further. Fails every gate at every tier including HARD, which is deliberate: GOD MODE is the only door that opens for it, and even GOD MODE keeps the honeypot check.",
+      "pairAddress": "0x006e006e006e006e006e006e006e006e006e006e",
+      "tokenX": {
+        "address": "0x5555555555555555555555555555555555555555",
+        "symbol": "YAKI",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x0067006700670067006700670067006700670067",
+        "symbol": "SNOUT",
+        "decimals": 18
+      },
+      "binStep": 100,
+      "activeBinId": 8389200,
+      "tvlUsd": 12000,
+      "volume24hUsd": 6000,
+      "createdAt": 1785643200,
+      "lpConcentration": 0.88,
+      "realizedVol24h": 2.4,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "Top-left, but survivable: passes HARD, fails EASY and NORMAL. This is what Mouch actually plays, as distinct from pool 7 which nobody should. Momentum absent for SNOUT.",
+      "pairAddress": "0x006f006f006f006f006f006f006f006f006f006f",
+      "tokenX": {
+        "address": "0x0067006700670067006700670067006700670067",
+        "symbol": "SNOUT",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "binStep": 100,
+      "activeBinId": 8390000,
+      "tvlUsd": 32000,
+      "volume24hUsd": 16000,
+      "createdAt": 1785632400,
+      "lpConcentration": 0.45,
+      "realizedVol24h": 2.0,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "Middle of the plane: Moyaki's territory. Fails EASY on quote and age, fails NORMAL on safety alone, passes HARD. Momentum absent for MOLLY.",
+      "pairAddress": "0x0070007000700070007000700070007000700070",
+      "tokenX": {
+        "address": "0x006a006a006a006a006a006a006a006a006a006a",
+        "symbol": "MOLLY",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x0066006600660066006600660066006600660066",
+        "symbol": "WETH",
+        "decimals": 18
+      },
+      "binStep": 25,
+      "activeBinId": 8388700,
+      "tvlUsd": 95000,
+      "volume24hUsd": 35000,
+      "createdAt": 1784797200,
+      "lpConcentration": 0.35,
+      "realizedVol24h": 0.9,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "Isolates tvl-too-low: everything else about this pool is fine for EASY, but it is simply too small. Fails NORMAL on TVL too, clears HARD.",
+      "pairAddress": "0x0071007100710071007100710071007100710071",
+      "tokenX": {
+        "address": "0x2222222222222222222222222222222222222222",
+        "symbol": "CHOG",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x0064006400640064006400640064006400640064",
+        "symbol": "MON",
+        "decimals": 18
+      },
+      "binStep": 25,
+      "activeBinId": 8388500,
+      "tvlUsd": 40000,
+      "volume24hUsd": 6000,
+      "createdAt": 1782205200,
+      "lpConcentration": 0.25,
+      "realizedVol24h": 0.5,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "Isolates too-new: five days old, everything else strong. Clears NORMAL and HARD, which only fail on age at EASY's 14 day floor.",
+      "pairAddress": "0x0072007200720072007200720072007200720072",
+      "tokenX": {
+        "address": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x0064006400640064006400640064006400640064",
+        "symbol": "MON",
+        "decimals": 18
+      },
+      "binStep": 10,
+      "activeBinId": 8388608,
+      "tvlUsd": 700000,
+      "volume24hUsd": 140000,
+      "createdAt": 1785229200,
+      "lpConcentration": 0.2,
+      "realizedVol24h": 0.4,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "Isolates quote-not-allowed: DUCT is not a strong or mid quote at any tier, so this fails every difficulty on quote alone (plus safety at EASY), never on TVL, age, or heat.",
+      "pairAddress": "0x0073007300730073007300730073007300730073",
+      "tokenX": {
+        "address": "0x7777777777777777777777777777777777777777",
+        "symbol": "DAK",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x006b006b006b006b006b006b006b006b006b006b",
+        "symbol": "DUCT",
+        "decimals": 18
+      },
+      "binStep": 50,
+      "activeBinId": 8388800,
+      "tvlUsd": 500000,
+      "volume24hUsd": 90000,
+      "createdAt": 1772701200,
+      "lpConcentration": 0.25,
+      "realizedVol24h": 0.45,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "A second EASY pass, distinct from WMON/USDC and NSTR/MON: high turnover keeps HEAT closer to the ceiling than either of them, so it sits lower on the map inside Molandak's region rather than stacking on top of the other two. heat-too-high is already isolated by the existing CHOG/USDC pool above; duplicating it here would only shrink the passing count without teaching anything new.",
+      "pairAddress": "0x0074007400740074007400740074007400740074",
+      "tokenX": {
+        "address": "0x5555555555555555555555555555555555555555",
+        "symbol": "YAKI",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 25,
+      "activeBinId": 8388650,
+      "tvlUsd": 900000,
+      "volume24hUsd": 300000,
+      "createdAt": 1768381200,
+      "lpConcentration": 0.3,
+      "realizedVol24h": 0.45,
+      "createdAtIsExact": true
+    },
+    {
+      "_comment": "Isolates safety-too-low: TVL, age, and quote all clear EASY, HEAT is well under its ceiling, only SAFETY (dragged down by concentration) misses the 70 floor. Clears NORMAL and HARD.",
+      "pairAddress": "0x0075007500750075007500750075007500750075",
+      "tokenX": {
+        "address": "0x7777777777777777777777777777777777777777",
+        "symbol": "DAK",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 25,
+      "activeBinId": 8388900,
+      "tvlUsd": 300000,
+      "volume24hUsd": 30000,
+      "createdAt": 1780477200,
+      "lpConcentration": 0.75,
+      "realizedVol24h": 0.3,
+      "createdAtIsExact": true
+    }
+  ]
+}

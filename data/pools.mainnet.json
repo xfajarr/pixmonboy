@@ -1,0 +1,212 @@
+{
+  "profile": "mainnet",
+  "chainId": 143,
+  "capturedAt": "2026-08-07T17:52:50.000Z",
+  "capturedAtBlock": 93984324,
+  "stateFloorBlock": 91378521,
+  "stateWindowDays": 9.1,
+  "source": {
+    "pairAddress": "chain",
+    "tokenX": "chain",
+    "tokenY": "chain",
+    "binStep": "chain",
+    "activeBinId": "chain",
+    "tvlUsd": "chain, reserves priced off the active bin against a stable leg",
+    "createdAt": "chain, bisected inside the state window. When the pair already existed at the floor this is the floor timestamp, which the pair provably predates, so it is an upper bound on the birthday and therefore a lower bound on age.",
+    "createdAtIsExact": "chain. False means the pool is AT LEAST this old and possibly much older.",
+    "lpConcentration": "chain, busiest bin share across the active neighbourhood",
+    "volume24hUsd": "NOT READ. eth_getLogs is capped at 100 blocks on this RPC.",
+    "realizedVol24h": "NOT READ. Needs price history the same cap forbids."
+  },
+  "pools": [
+    {
+      "pairAddress": "0x465A0B350bb6a7eFF750729f1D866d67F0b53980",
+      "tokenX": {
+        "address": "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a",
+        "symbol": "AUSD",
+        "decimals": 6
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 1,
+      "activeBinId": 8388609,
+      "tvlUsd": 102670,
+      "volume24hUsd": null,
+      "createdAt": 1785338593,
+      "createdAtIsExact": false,
+      "lpConcentration": 0.9875387231205855,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0x5AFD3EC861f6104af26e8755aBcc1f876de77620",
+      "tokenX": {
+        "address": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 5,
+      "activeBinId": 8325592,
+      "tvlUsd": 45835,
+      "volume24hUsd": null,
+      "createdAt": 1785338593,
+      "createdAtIsExact": false,
+      "lpConcentration": 0.0744355329669131,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0x5E60BC3F7a7303BC4dfE4dc2220bdC90bc04fE22",
+      "tokenX": {
+        "address": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 10,
+      "activeBinId": 8357092,
+      "tvlUsd": 5794,
+      "volume24hUsd": null,
+      "createdAt": 1785338593,
+      "createdAtIsExact": false,
+      "lpConcentration": 0.04169114370861641,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0x3eE837305218d05C0C9dAa452A5f3C35091Dcd3e",
+      "tokenX": {
+        "address": "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+        "symbol": "USDT0",
+        "decimals": 6
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 1,
+      "activeBinId": 8388601,
+      "tvlUsd": 4529,
+      "volume24hUsd": null,
+      "createdAt": 1785338593,
+      "createdAtIsExact": false,
+      "lpConcentration": 0.15611050174211474,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0xe74188e597130664E1F8f2b881222557EC624910",
+      "tokenX": {
+        "address": "0xd18B7EC58Cdf4876f6AFebd3Ed1730e4Ce10414b",
+        "symbol": "cbBTC",
+        "decimals": 8
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 10,
+      "activeBinId": 8395082,
+      "tvlUsd": 2369,
+      "volume24hUsd": null,
+      "createdAt": 1785338593,
+      "createdAtIsExact": false,
+      "lpConcentration": 0.04290553869743161,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0xF4443D36ECB9F3Ef06EAE9B26706AaF591ade5cE",
+      "tokenX": {
+        "address": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 100,
+      "activeBinId": 8385442,
+      "tvlUsd": 2047,
+      "volume24hUsd": null,
+      "createdAt": 1785338593,
+      "createdAtIsExact": false,
+      "lpConcentration": 0.05408430901011411,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0xdd0a93642B0e1e938a75B400f31095Af4C4BECE5",
+      "tokenX": {
+        "address": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a",
+        "symbol": "AUSD",
+        "decimals": 6
+      },
+      "binStep": 10,
+      "activeBinId": 8357092,
+      "tvlUsd": 1935,
+      "volume24hUsd": null,
+      "createdAt": 1785338593,
+      "createdAtIsExact": false,
+      "lpConcentration": 0.04153461661944907,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0x1fEf020CAf5129A81aAb604f7fD14Cb54BF18963",
+      "tokenX": {
+        "address": "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a",
+        "symbol": "AUSD",
+        "decimals": 6
+      },
+      "tokenY": {
+        "address": "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+        "symbol": "USDT0",
+        "decimals": 6
+      },
+      "binStep": 1,
+      "activeBinId": 8388616,
+      "tvlUsd": 699,
+      "volume24hUsd": null,
+      "createdAt": 1785338593,
+      "createdAtIsExact": false,
+      "lpConcentration": 0.6080579794804956,
+      "realizedVol24h": null
+    },
+    {
+      "pairAddress": "0xE8434311626bDac9957AbE784162960A0D587848",
+      "tokenX": {
+        "address": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+        "symbol": "WMON",
+        "decimals": 18
+      },
+      "tokenY": {
+        "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+        "symbol": "USDC",
+        "decimals": 6
+      },
+      "binStep": 25,
+      "activeBinId": 8375990,
+      "tvlUsd": 538,
+      "volume24hUsd": null,
+      "createdAt": 1785338593,
+      "createdAtIsExact": false,
+      "lpConcentration": 0.09515381354255491,
+      "realizedVol24h": null
+    }
+  ]
+}

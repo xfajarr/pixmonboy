@@ -1,0 +1,21 @@
+{
+  "shell": "shell-clamshell.png",
+  "size": [
+    896,
+    1200
+  ],
+  "screen_px": [
+    174,
+    104,
+    552,
+    387
+  ],
+  "screen_pct": {
+    "left": 19.42,
+    "top": 8.667,
+    "width": 61.607,
+    "height": 32.25
+  },
+  "screen_aspect": 1.4264,
+  "target_aspect": 1.5
+}
