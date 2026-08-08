@@ -102,6 +102,7 @@ function LiveRange() {
       return
     }
     if (!pool || !session.cardAddress) return
+    const card = session.cardAddress as `0x${string}`
 
     const router = testnet.contracts.lbRouter
     if (!router) {
@@ -123,7 +124,7 @@ function LiveRange() {
         plan: plan.plan,
         activeBinId: pool.activeBinId,
         amountQuote: session.amount,
-        account: session.cardAddress as `0x${string}`,
+        account: card,
         router,
         nowSeconds: Math.floor(Date.now() / 1000),
       },
@@ -139,11 +140,33 @@ function LiveRange() {
           label: call.label,
         })
         try {
-          const { hash } = await sendTransaction({
-            to: call.to,
-            data: call.data,
-            chainId: testnet.id,
-          })
+          // `address` is not optional here, whatever the type says.
+          //
+          // Privy resolves the signer as `address ? findLinkedEmbedded(address)
+          // : defaultEmbedded(user)`, and ONLY reaches its external-wallet
+          // branch inside the `!wallet && address` arm. Omit the option and a
+          // player who arrived through S1's "bring your own card" row has no
+          // embedded wallet to fall back to and no address to look their
+          // connected one up by, so the send fails before it is ever offered:
+          // "No embedded or connected wallet found for address." card.tsx's own
+          // comment names that player — an external wallet lands in `wallets`
+          // without ever flipping `authenticated` — and the card is built from
+          // `wallets[0]` precisely so they get one.
+          //
+          // Passing the card also closes a quieter hole. `wallets[0]` is not
+          // required to be the embedded wallet even when one exists (an
+          // already-connected extension can sit ahead of it), and the default
+          // signer is. The deposit calldata is built with `account: card` as
+          // the recipient of the liquidity, so the two disagreeing means
+          // signing from one wallet and minting to another.
+          const { hash } = await sendTransaction(
+            {
+              to: call.to,
+              data: call.data,
+              chainId: testnet.id,
+            },
+            { address: card },
+          )
           if (index === calls.length - 1) {
             setDeposit({
               status: 'opened',

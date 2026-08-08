@@ -60,27 +60,52 @@ function MonadMark() {
  * a banner would itself take screen height and change the thing it measures.
  */
 function useOverflowWarning(viewport: RefObject<HTMLDivElement | null>) {
+  /**
+   * The last overrun reported, so one clipped screen warns ONCE.
+   *
+   * This hook had no dependency array, which means it re-ran on every render
+   * and scheduled a fresh `requestAnimationFrame` and a fresh
+   * `document.fonts.ready` callback each time. On a screen that genuinely
+   * overruns, every warning is itself printed during a render cycle that
+   * schedules the next check: the result was measured at roughly 250 warnings
+   * per second, which floods the dev server's log pipe, saturates the main
+   * thread, and eventually kills the process with an out-of-memory.
+   *
+   * The symptom is NOT "a noisy console". It is a dev session where buttons
+   * stop responding and sounds stop playing, because nothing else gets a turn.
+   * The production build was always fine, which is exactly what made it
+   * confusing to diagnose.
+   */
+  const reported = useRef<number | null>(null)
+
   useEffect(() => {
     if (!import.meta.env.DEV) return
     const el = viewport.current
     if (!el) return
 
-    // After paint and after the webfont swap, because an 8px bitmap face
-    // resolving late changes every line box on the screen.
+    // After paint and after the webfont swap, because a bitmap face resolving
+    // late changes every line box on the screen.
     const check = () => {
       const over = el.scrollHeight - el.clientHeight
-      if (over > 0) {
-        console.warn(
-          `[viewport] screen overruns by ${over}px and is being clipped. ` +
-            `The 480x320 box is fixed; something above the footer has to give.`,
-        )
+      if (over <= 0) {
+        reported.current = null
+        return
       }
+      // Same overrun as last time is the same bug, already reported.
+      if (reported.current === over) return
+      reported.current = over
+      console.warn(
+        `[viewport] screen overruns by ${over}px and is being clipped. ` +
+          `The 480x320 box is fixed; something above the footer has to give.`,
+      )
     }
 
     const frame = requestAnimationFrame(check)
     void document.fonts.ready.then(check)
     return () => cancelAnimationFrame(frame)
-  })
+    // Runs on mount and whenever the ROUTE swaps the screen underneath, which
+    // is what `children` changing means here. Never on every render.
+  }, [viewport])
 }
 
 /** Landscape on a short viewport makes the console unreadably small. */

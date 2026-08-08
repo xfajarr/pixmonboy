@@ -72,22 +72,42 @@
 
   /* ---------------------------------------------------------------------
      TYPE
-     Two sizes doing all the work, doubled. Never 12px, never 20px, never
-     24px: a bitmap font at a non-integer multiple resamples and the
-     illusion dies in a way people feel without being able to name it.
+
+     THE GRID IS 11, NOT 8, AND THAT WAS MEASURED RATHER THAN ASSUMED.
+
+     This block used to say "two sizes doing all the work, doubled. Never
+     12px, never 20px, never 24px: a bitmap font at a non-integer multiple
+     resamples". The instinct was exactly right and the number was wrong.
+     Departure Mono is not drawn on an 8px em. Measuring the advance width of
+     one glyph at each size, in the browser, against the real font file:
+
+         8px  -> 5.0909  fractional   <- what this file used to ask for
+        11px  -> 7.0000  INTEGER      <- the font's own grid
+        16px  -> 10.1818 fractional   <- also what it used to ask for
+        22px  -> 14.0000 INTEGER
+
+     So the two sizes the whole product was set in were BOTH resampling, and
+     the blur the old comment warns about was being caused by the rule meant
+     to prevent it. 11 and 22 land on whole device pixels at 1x.
+
+     Ink heights at these sizes are 11px and 20px, so every line-height below
+     is unchanged except `value`, which grows from 20 to 24 to clear a 20px
+     glyph. Nothing else in the product moves: the screens are budgeted in
+     LINE BOXES, and the line boxes are the same. The glyphs inside them are
+     simply 37% bigger and no longer resampled.
      --------------------------------------------------------------------- */
   --font-pixel: 'Departure Mono', ui-monospace, 'Roboto Mono', monospace;
   --font-chrome: 'Roboto Mono', ui-monospace, monospace;
 
-  --text-micro: 8px; /* labels, units, footnotes */
+  --text-micro: 11px; /* labels, units, footnotes */
   --text-micro--line-height: 12px;
-  --text-body: 8px; /* descriptions, dialogue */
+  --text-body: 11px; /* descriptions, dialogue */
   --text-body--line-height: 16px;
-  --text-value: 16px; /* numbers that matter */
-  --text-value--line-height: 20px;
-  --text-title: 16px; /* screen headers, uppercase */
+  --text-value: 22px; /* numbers that matter */
+  --text-value--line-height: 24px;
+  --text-title: 22px; /* screen headers, uppercase */
   --text-title--line-height: 24px;
-  --text-hero: 32px; /* boot, results, score */
+  --text-hero: 33px; /* boot, results, score */
   --text-hero--line-height: 40px;
 
   /* ---------------------------------------------------------------------

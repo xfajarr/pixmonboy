@@ -52,6 +52,7 @@
     "@vitest/coverage-v8": "4.1.10",
     "@vitest/ui": "4.1.10",
     "jsdom": "30.0.1",
+    "nitro": "^3.0.260610-beta",
     "vite": "8.2.0",
     "vitest": "4.1.10"
   }

@@ -93,7 +93,16 @@
 }
 .base {
   border-radius: 8px 8px 34px 34px;
-  padding: 22px 30px 28px;
+  /*
+    THE BODY IS FURNITURE, THE SCREEN IS THE PRODUCT.
+
+    Every pixel of height down here is a pixel `useFitScale` spends before it
+    reaches the 480x320 screen, and when the total console is taller than the
+    viewport the ladder drops off 1x entirely and falls back to a CONTINUOUS
+    scale — which resamples the pixel art. A shorter body is not a cosmetic
+    preference; it is what keeps the screen on a whole-pixel scale.
+  */
+  padding: 14px 22px 16px;
 }
 
 .screw {
@@ -194,7 +203,7 @@
 .hinge {
   display: flex;
   align-items: stretch;
-  height: 34px;
+  height: 22px;
 }
 .hinge .cap {
   width: 58px;
@@ -219,7 +228,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 .led {
   flex: none;
@@ -310,19 +319,25 @@
   gap: 14px;
 }
 
+/*
+  108px, down from 132. The DRAWN cross shrinks with it, but the touch targets
+  are quadrants of the whole well (see `.dpad-hit`), so each one is 54px and
+  still clears the 44px minimum a finger needs. That minimum, not the drawing,
+  is the floor this can be trimmed to.
+*/
 .dpad-well {
   display: grid;
   place-items: center;
-  width: 132px;
-  height: 132px;
-  border-radius: 24px;
+  width: 108px;
+  height: 108px;
+  border-radius: 20px;
   background: var(--shell-d);
   box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.42);
 }
 .dpad {
   position: relative;
-  width: 104px;
-  height: 104px;
+  width: 86px;
+  height: 86px;
 }
 .dpad i {
   position: absolute;
@@ -334,33 +349,39 @@
   );
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
 }
+/*
+  The cross is 86px across with 29px arms, so each arm is inset by
+  (86 - 29) / 2 = 28.5, rounded to 28 and 29 so the two halves stay on whole
+  pixels rather than landing the moulding on a half-pixel seam.
+*/
 .dpad i.v {
   top: 0;
-  left: 36px;
-  width: 32px;
-  height: 104px;
+  left: 28px;
+  width: 29px;
+  height: 86px;
   border-radius: 7px;
 }
 .dpad i.h {
-  top: 36px;
+  top: 28px;
   left: 0;
-  width: 104px;
-  height: 32px;
+  width: 86px;
+  height: 29px;
   border-radius: 7px;
 }
 .dpad i.c {
-  top: 40px;
-  left: 40px;
+  top: 33px;
+  left: 33px;
   z-index: 2;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--btn-d);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Touch targets sit on top of the drawn cross. The drawing is 104px but a
-   finger needs 44px, so the hit areas are quadrants of the whole well. */
+/* Touch targets sit on top of the drawn cross. The drawing is 86px but a
+   finger needs 44px, so the hit areas are quadrants of the whole 108px well,
+   which makes each one 54px. That is the floor the well was trimmed to. */
 .dpad-hit {
   position: absolute;
   inset: 0;
@@ -421,10 +442,13 @@
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
+/* 46px buttons in a tighter well. 46 is deliberately just over the 44px touch
+   minimum: this is the smallest the face buttons can be and still be pressed
+   with a thumb, which is where the trimming stops. */
 .ab-well {
   display: flex;
-  gap: 16px;
-  padding: 14px 20px;
+  gap: 12px;
+  padding: 10px 14px;
   border-radius: 60px;
   background: var(--shell-d);
   transform: rotate(-18deg);
@@ -433,8 +457,8 @@
 .ab-well button {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -469,16 +493,26 @@
   budget that is genuinely fixed. Hidden on touch, where there is no keyboard
   to label and the buttons are already under a thumb.
 */
+/*
+  The key legend, on ONE line.
+
+  It wrapped to two at gap 18 and letter-spacing 0.16em, which cost the console
+  34px of height for a caption — and height is the dimension the fit scale is
+  starving for. `nowrap` plus a tighter gap keeps all five hints on a single
+  row; if a sixth is ever added, shrink the gap rather than letting it wrap.
+*/
 .keyhint {
   display: flex;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: 18px;
+  gap: 12px;
   margin: 0;
-  padding-top: 16px;
+  padding-top: 10px;
   color: var(--shell-l);
-  font-size: 11px;
-  letter-spacing: 0.16em;
+  font-size: 10px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
   opacity: 0.8;
 }
 .keyhint b {

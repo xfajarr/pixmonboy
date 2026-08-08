@@ -4,6 +4,7 @@ import { defineConfig, loadEnv } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { nitro } from 'nitro/vite'
 
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -49,7 +50,13 @@ const config = defineConfig(({ mode }) => {
     // missing and made S1's sign-in rows fall through to the fixture card.
     envDir: '../../',
     resolve: { tsconfigPaths: true },
-    plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+    plugins: [
+      devtools(),
+      tailwindcss(),
+      nitro({ preset: 'vercel' }),
+      tanstackStart(),
+      viteReact(),
+    ],
     server: {
       // Any host. This looks lax and is the correct setting for THIS project on
       // THIS day: the console is demoed through a tunnel, `cloudflared` mints a
