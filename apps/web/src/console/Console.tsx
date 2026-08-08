@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { ActionButtons, DPad, Speaker, StartSelect } from './Controls'
 import { VolumeSlider } from './VolumeSlider'
+import { setSoundVolume } from './sound'
+import { useBackgroundMusic } from './useBackgroundMusic'
 import { useFitScale } from './useFitScale'
 import { ConsoleInputProvider } from './useConsoleInput'
 import type { ReactNode, RefObject } from 'react'
@@ -117,6 +119,8 @@ export function Console({
   const [volume, setVolume] = useState(0.6)
   const needsRotate = useNeedsRotate()
   useOverflowWarning(viewport)
+  useBackgroundMusic(volume)
+  useEffect(() => setSoundVolume(volume), [volume])
 
   if (needsRotate) {
     return <div className="rotate-prompt">Rotate to portrait</div>
@@ -146,7 +150,10 @@ export function Console({
                 {children}
               </div>
             </div>
-            <div className="wordmark">{wordmark}</div>
+            {/* NO WORDMARK HERE. It used to sit under the bezel, where it cost
+                the lid a line of height and pushed the screen up into a band of
+                plastic. The name belongs on the body of a handheld, next to the
+                maker's mark, which is where every real one puts it. */}
           </div>
 
           <div className="hinge">
@@ -161,7 +168,14 @@ export function Console({
 
             <div className="toprow">
               <VolumeSlider value={volume} onChange={setVolume} />
-              <MonadMark />
+              {/* The badge: maker's mark and product name as one lockup, the
+                  way it is moulded on a real shell. Grouped rather than spaced
+                  apart so the two read as one stamp instead of two decorations
+                  that happen to share a row. */}
+              <div className="badge">
+                <MonadMark />
+                <span className="wordmark">{wordmark}</span>
+              </div>
               <i className="led" aria-hidden="true" />
             </div>
 

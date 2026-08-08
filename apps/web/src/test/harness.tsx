@@ -24,9 +24,24 @@ import type { ConsoleIntent } from '../console/intents'
  *      pass while the screen was unreachable by keyboard, which is Gate 1.2.
  */
 
-/** Every screen mounts inside the console's input provider and nothing else. */
+/**
+ * Every screen mounts inside the console's input provider and nothing else.
+ *
+ * `rerenderScreen` re-wraps, and that matters more than it looks. Testing
+ * Library's own `rerender` replaces the WHOLE tree with what it is given, so
+ * passing a bare screen drops the provider and changes the tree's shape — React
+ * then unmounts and remounts the component, silently resetting any state it was
+ * accumulating. A test of anything that builds up over time (a price history, a
+ * streak, a chart) would see an empty component and read as a bug in the screen.
+ */
 export function renderScreen(ui: ReactElement) {
-  return render(<ConsoleInputProvider>{ui}</ConsoleInputProvider>)
+  const utils = render(<ConsoleInputProvider>{ui}</ConsoleInputProvider>)
+
+  return {
+    ...utils,
+    rerenderScreen: (next: ReactElement) =>
+      utils.rerender(<ConsoleInputProvider>{next}</ConsoleInputProvider>),
+  }
 }
 
 /**

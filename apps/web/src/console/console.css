@@ -35,7 +35,20 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 568px;
+  /*
+    THE SHELL IS AS WIDE AS THE SCREEN PLUS ITS PLASTIC, AND NOT A PIXEL MORE.
+
+      480 screen + 2x12 bezel + 2x16 lid = 536
+
+    It was 568, which left 32px of moulded plastic doing nothing on either side
+    of a 480px screen, and the screen read as a small window in a large slab.
+    Every pixel of that plastic is also a pixel the fit scale spends before it
+    gets to the screen, so a wider shell is a SMALLER game on every device.
+
+    Keep this equal to the arithmetic above when either padding changes, or the
+    bezel goes back to being wider than the thing it frames.
+  */
+  width: 536px;
   filter: drop-shadow(0 26px 40px rgba(0, 0, 0, 0.55));
   transform-origin: center center;
   user-select: none;
@@ -73,7 +86,10 @@
 }
 .lid {
   border-radius: 26px 26px 8px 8px;
-  padding: 26px 26px 28px;
+  /* Even on all four sides now the wordmark has moved to the body. The old
+     28px bottom existed to give that line room; with nothing under the bezel,
+     an uneven inset just reads as a misaligned screen. */
+  padding: 16px;
 }
 .base {
   border-radius: 8px 8px 34px 34px;
@@ -120,7 +136,10 @@
 
 .bezel {
   position: relative;
-  padding: 22px 20px;
+  /* Even, and thin. 22/20 put a visible black margin around a screen that is
+     supposed to BE the front of the lid; the glass on a handheld sits nearly
+     flush with its frame. */
+  padding: 12px;
   border-radius: 14px;
   background: #191228;
   box-shadow:
@@ -139,13 +158,37 @@
   background: var(--color-screen);
 }
 
+/*
+  The badge on the body: maker's mark, then product name.
+
+  Moved down from under the screen, where it was costing the lid a whole line
+  of height for a word nobody reads twice. `.toprow` is a space-between row, so
+  the two halves of the badge have to be wrapped or they drift apart to opposite
+  ends of the shell and stop reading as one stamp.
+*/
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
 .wordmark {
-  padding-top: 13px;
   color: var(--shell-l);
-  font-size: 10px;
-  letter-spacing: 0.46em;
-  text-indent: 0.46em;
-  text-align: center;
+  /*
+    13px, not the old 10px.
+    
+    The shell is CHROME, not the 480x320 screen, so it is free of the pixel-grid
+    rule in tokens.css that pins screen type to multiples of 8. Nothing here is
+    a bitmap glyph on a fixed grid, so it can be sized for legibility at 1x —
+    which is the size most people will first open this at.
+  */
+  font-size: 13px;
+  letter-spacing: 0.34em;
+  /* Letter-spacing adds a trailing gap after the last glyph, which throws the
+     lockup off-centre against the mark. Pulling it back by the same amount is
+     the standard fix and keeps the two visually kerned. */
+  margin-right: -0.34em;
+  white-space: nowrap;
 }
 
 .hinge {
@@ -254,9 +297,9 @@
   border-right: 1px solid var(--btn-d);
 }
 .vol-cap {
-  min-width: 46px;
+  min-width: 54px;
   color: var(--shell-l);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.14em;
 }
 
@@ -433,7 +476,7 @@
   margin: 0;
   padding-top: 16px;
   color: var(--shell-l);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   opacity: 0.8;
@@ -451,12 +494,12 @@
 /*
   PORTRAIT PHONE CHROME.
 
-  The console does not change shape here, it loses padding. On a 412px phone
-  the fit scale is decided entirely by width, so every pixel of moulded plastic
-  around the screen is a pixel the 480x320 screen does not get. Trimming the
-  shell from 568 to 520 wide buys the screen roughly 9% more of the device for
-  nothing but less bezel, and the D-pad and A/B buttons stay above the 44px
-  touch minimum, which is where the trimming stops.
+  The console does not change shape here, it loses the last of its padding. On
+  a 412px phone the fit scale is decided entirely by width, so every pixel of
+  moulded plastic around the screen is a pixel the 480x320 screen does not get.
+  The desktop shell is already trimmed to 536; this takes it to the floor of
+  480 + 2x10 + 2x10 = 520, where the D-pad and A/B buttons are still above the
+  44px touch minimum, which is where the trimming stops.
 */
 @media (max-width: 640px) {
   .console {
@@ -465,15 +508,16 @@
   }
   .lid {
     border-radius: 16px 16px 6px 6px;
-    padding: 10px 10px 8px;
+    padding: 10px;
   }
   .bezel {
     padding: 10px;
     border-radius: 8px;
   }
   .wordmark {
-    padding-top: 8px;
     font-size: 9px;
+    letter-spacing: 0.24em;
+    margin-right: -0.24em;
   }
   .hinge {
     height: 20px;

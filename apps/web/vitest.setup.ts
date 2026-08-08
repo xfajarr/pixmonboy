@@ -36,6 +36,21 @@ if (typeof window !== 'undefined') {
       configurable: true,
     })
   }
+
+  /**
+   * jsdom does not implement media playback, and every button press now plays a
+   * click through `console/sound.ts`. Without this, jsdom logs "Not
+   * implemented: HTMLMediaElement's play() method" once per press (two dozen
+   * lines of noise per test file). Stub it to a no-op promise so the click
+   * path still runs and the suite stays quiet. Same justification as the
+   * getGamepads stub above: the missing API is jsdom's, not the app's.
+   * Overridden unconditionally because jsdom defines `play` as a stub that
+   * logs "Not implemented" rather than leaving it absent.
+   */
+  Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+    value: () => Promise.resolve(),
+    configurable: true,
+  })
 }
 
 export {}
