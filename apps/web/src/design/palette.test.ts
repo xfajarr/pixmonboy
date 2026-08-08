@@ -78,13 +78,35 @@ describe('the fixed grid', () => {
     expect(tokenValue('--spacing')).toBe('4px')
   })
 
-  it('uses only 8, 16, and 32 for type sizes', () => {
+  it('sets type on Departure Mono’s own 11px grid, not an 8px one', () => {
+    /**
+     * THIS TEST USED TO REQUIRE 8, 16 OR 32, AND THAT WAS THE BUG IT WAS
+     * MEANT TO PREVENT.
+     *
+     * The intent was right: a pixel font at a non-integer multiple resamples,
+     * and the illusion dies. The number was wrong. Measuring one glyph's
+     * advance width against the real font file, in a browser, at 1x:
+     *
+     *      8px -> 5.0909  fractional
+     *     11px -> 7.0000  INTEGER
+     *     16px -> 10.1818 fractional
+     *     22px -> 14.0000 INTEGER
+     *     33px -> 21.0000 INTEGER
+     *
+     * Departure Mono is drawn on an 11px em. So the two sizes the entire
+     * product was set in, 8 and 16, were BOTH being resampled by the rule
+     * written to stop exactly that, and the type was blurry everywhere.
+     *
+     * Multiples of 11 are the real invariant, so that is what this asserts.
+     * If the face is ever swapped, re-measure and change the number here
+     * rather than assuming the new font shares this one's grid.
+     */
     const sizes = [...tokensCss.matchAll(/--text-([a-z]+):\s*(\d+)px;/g)].map(
       (m) => Number(m[2]),
     )
     expect(sizes.length).toBeGreaterThan(0)
     for (const size of sizes) {
-      expect([8, 16, 32]).toContain(size)
+      expect(size % 11).toBe(0)
     }
   })
 
