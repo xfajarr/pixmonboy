@@ -11,6 +11,11 @@ const faucetResult = t.Object({
   remainingDrips: t.Number(),
 })
 
+const faucetBalance = t.Object({
+  balanceMon: t.Nullable(t.String()),
+  reason: t.Nullable(t.String()),
+})
+
 const faucetStatus = t.Object({
   enabled: t.Boolean(),
   chainId: t.Number(),
@@ -25,11 +30,24 @@ const faucetStatus = t.Object({
  * caller through the same shape.
  */
 export const faucet = new Elysia({ name: 'faucet', prefix: '/faucet' })
-  .model({ 'Faucet.result': faucetResult, 'Faucet.status': faucetStatus })
+  .model({
+    'Faucet.result': faucetResult,
+    'Faucet.status': faucetStatus,
+    'Faucet.balance': faucetBalance,
+  })
   .get('/status', () => FaucetService.status(), {
     response: { 200: 'Faucet.status' },
     detail: { summary: 'Can the faucet drip right now' },
   })
+  .get(
+    '/balance/:address',
+    ({ params }) => FaucetService.balanceOf(params.address),
+    {
+      params: t.Object({ address: t.String() }),
+      response: { 200: 'Faucet.balance' },
+      detail: { summary: 'Native MON held by an address' },
+    },
+  )
   .post('/', ({ body }) => FaucetService.drip(body.address), {
     body: t.Object({ address: t.String() }),
     response: { 200: 'Faucet.result' },

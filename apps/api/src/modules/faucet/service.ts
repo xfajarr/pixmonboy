@@ -11,6 +11,8 @@ import { privateKeyToAccount } from 'viem/accounts'
 import { chainFor } from '@pixmon-boy/sdk'
 import type { ChainConfig } from '@pixmon-boy/sdk'
 
+import { rpcHttpFor } from '../../rpc'
+
 /**
  * A gas drip, so a freshly created embedded wallet can send its first
  * transaction.
@@ -65,7 +67,7 @@ function viemChain(config: ChainConfig) {
       symbol: config.nativeSymbol,
       decimals: 18,
     },
-    rpcUrls: { default: { http: [config.rpcUrl] } },
+    rpcUrls: { default: { http: [rpcHttpFor(config)] } },
     blockExplorers: { default: { name: 'Monadscan', url: config.explorer } },
   })
 }
@@ -114,6 +116,42 @@ export abstract class FaucetService {
     }
   }
 
+  /**
+   * How much native MON an address holds, as a string.
+   *
+   * Lives on the faucet rather than on `chain`, which is deliberately
+   * zero-network (see chain/service.ts): this module already reads balances
+   * because that is how `drip` decides, so the capability is here and adding it
+   * next door would put an RPC call inside a module whose documented promise is
+   * that it never makes one.
+   *
+   * `balanceMon` is null when the read failed, never 0. A zero balance and an
+   * unreachable RPC produce very different screens, and collapsing them would
+   * make an outage look like an empty wallet.
+   */
+  static async balanceOf(
+    address: string,
+  ): Promise<{ balanceMon: string | null; reason: string | null }> {
+    if (!isAddress(address)) {
+      return { balanceMon: null, reason: 'not a valid address' }
+    }
+
+    const config = chainFor()
+    try {
+      const client = createPublicClient({
+        chain: viemChain(config),
+        transport: http(rpcHttpFor(config)),
+      })
+      const balance = await client.getBalance({ address })
+      return { balanceMon: (Number(balance) / 1e18).toFixed(4), reason: null }
+    } catch (error) {
+      return {
+        balanceMon: null,
+        reason: (error as Error).message.split('\n')[0],
+      }
+    }
+  }
+
   static async drip(address: string): Promise<FaucetResult> {
     if (!isAddress(address)) return refuse('not a valid address')
 
@@ -133,7 +171,7 @@ export abstract class FaucetService {
       return refuse('faucet is empty for this session')
 
     const chain = viemChain(config)
-    const transport = http(config.rpcUrl)
+    const transport = http(rpcHttpFor(config))
     const publicClient = createPublicClient({ chain, transport })
 
     let balance: bigint

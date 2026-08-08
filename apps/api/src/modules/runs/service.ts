@@ -4,6 +4,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 import { chainFor, diskRegistryAbi, GAS_LIMITS } from '@pixmon-boy/sdk'
 import type { ChainConfig } from '@pixmon-boy/sdk'
 
+import { rpcHttpFor } from '../../rpc'
 import type { RecordRunBody, RecordRunResult } from './model'
 
 /**
@@ -58,7 +59,7 @@ function viemChain(config: ChainConfig) {
       symbol: config.nativeSymbol,
       decimals: 18,
     },
-    rpcUrls: { default: { http: [config.rpcUrl] } },
+    rpcUrls: { default: { http: [rpcHttpFor(config)] } },
     blockExplorers: { default: { name: 'Monadscan', url: config.explorer } },
   })
 }
@@ -144,7 +145,7 @@ export abstract class RunsService {
 
     const { config, contract, account } = ctx
     const chain = viemChain(config)
-    const transport = http(config.rpcUrl)
+    const transport = http(rpcHttpFor(config))
     const publicClient = createPublicClient({ chain, transport })
     const walletClient = createWalletClient({ account, chain, transport })
 

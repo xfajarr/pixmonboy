@@ -3,6 +3,7 @@ import { Elysia } from 'elysia'
 import { chain } from './modules/chain'
 import { faucet } from './modules/faucet'
 import { health } from './modules/health'
+import { price } from './modules/price'
 import { runs } from './modules/runs'
 
 /**
@@ -32,6 +33,7 @@ export const app = new Elysia({ prefix: '/api' })
   })
   .use(health)
   .use(chain)
+  .use(price)
   .use(faucet)
   .use(runs)
 

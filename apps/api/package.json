@@ -6,7 +6,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "dev": "bun run --hot src/server.ts",
+    "dev": "bun run --hot --env-file=../../.env.local src/server.ts",
     "start": "bun run src/server.ts",
     "typecheck": "tsc --noEmit"
   },
