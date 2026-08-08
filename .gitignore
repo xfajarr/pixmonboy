@@ -1,0 +1,61 @@
+# dependencies
+node_modules/
+.bun/
+
+# build output
+dist/
+build/
+.output/
+.nitro/
+.tanstack/
+.vinxi/
+.turbo/
+.vercel/
+.wrangler/
+coverage/
+__unconfig*
+todos.json
+*.local
+
+# env and secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+bun-debug.log*
+
+# editors / os
+.DS_Store
+Thumbs.db
+.idea/
+
+# graphify working files.
+# graph.html, graph.json, GRAPH_REPORT.md and manifest.json ARE committed so a
+# contributor who clones gets the knowledge graph without rebuilding it.
+# The AST cache is keyed by local file hashes, so it only creates conflicts.
+graphify-out/.graphify_*
+graphify-out/memory/
+graphify-out/cache/
+graphify-out/cost.json
+
+.claude/superpowers-hooks/
+
+# claude local state
+.claude/settings.local.json
+
+# Machine local, never shared. settings.json pins hook commands to absolute
+# paths on ONE machine (C:/Users/.../graphify.EXE), so a teammate who clones
+# this repo inherits hooks that point at a binary they do not have and their
+# Claude Code breaks on every tool call. The skills under .claude/skills/ ARE
+# shared on purpose: they are portable and they are project scope.
+.claude/settings.json
+
+# Foundry build output. contracts/lib/ IS committed on purpose: forge-std is
+# vendored rather than a submodule, so CI needs no network and no submodule
+# checkout to build the contracts.
+contracts/out/
+contracts/cache/
+contracts/broadcast/

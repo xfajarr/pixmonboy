@@ -1,0 +1,23 @@
+{
+  "name": "@pixmon-boy/sdk",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./chains": "./src/chains.ts",
+    "./abi": "./src/abi/disk-registry.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "verify:addresses": "bun run scripts/verify-addresses.ts",
+    "record:deployment": "bun run scripts/record-deployment.ts",
+    "generate:abi": "bun run scripts/generate-abi.ts",
+    "snapshot:pools": "bun run scripts/snapshot-pools.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.14"
+  },
+  "dependencies": {
+    "viem": "2.55.11"
+  }
+}

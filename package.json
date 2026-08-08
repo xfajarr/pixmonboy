@@ -1,0 +1,29 @@
+{
+  "name": "pixmon-boy",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "bun run --cwd apps/web dev",
+    "dev:api": "bun run --cwd apps/api dev",
+    "build": "bun run --cwd apps/web build",
+    "preview": "bun run --cwd apps/web preview",
+    "generate-routes": "bun run --cwd apps/web generate-routes",
+    "typecheck": "bun run --cwd packages/sdk typecheck && bun run --cwd apps/api typecheck && bun run --cwd apps/web typecheck",
+    "lint": "eslint",
+    "format": "prettier --write . && eslint --fix",
+    "check": "prettier --check .",
+    "test": "bun run --cwd apps/web test",
+    "test:watch": "bun run --cwd apps/web test:watch",
+    "test:ui": "bun run --cwd apps/web test:ui",
+    "test:coverage": "bun run --cwd apps/web test:coverage",
+    "verify": "bun run typecheck && bun run lint && bun run test"
+  },
+  "devDependencies": {
+    "@tanstack/eslint-config": "0.4.0",
+    "eslint": "10.8.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3"
+  },
+  "trustedDependencies": ["esbuild", "lightningcss", "unrs-resolver"]
+}
