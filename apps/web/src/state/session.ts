@@ -86,6 +86,13 @@ export interface SessionState {
   lastRun: RunSummary | null
 
   insertCard: (cardAddress: string) => void
+  clearCard: () => void
+  /**
+   * Set by an eject so S1 does not auto-insert the still-connected wallet that
+   * survives a Privy logout. `LiveCard` reads it; a fresh login resets it.
+   */
+  ejected: boolean
+  resetEjected: () => void
   chooseDifficulty: (difficulty: Difficulty, godMode?: boolean) => void
   choosePool: (pairAddress: string) => void
   setAmount: (amount: number) => void
@@ -108,8 +115,32 @@ export const useSession = create<SessionState>((set) => ({
   autopilot: true,
   balance: 250,
   lastRun: null,
+  ejected: false,
 
   insertCard: (cardAddress) => set({ cardAddress }),
+  // Ejecting the card drops every account-bound choice with it, so a fresh
+  // card starts from S1 and not from halfway through the previous player's
+  // run. The disk survives on chain; only this session forgets it. `ejected`
+  // is set here so S1 knows not to auto-insert the wallet that is still
+  // connected on Privy's side.
+  clearCard: () =>
+    set({
+      cardAddress: null,
+      diskId: null,
+      difficulty: 'easy',
+      godMode: false,
+      pairAddress: null,
+      amount: 100,
+      width: 'wide',
+      manualRange: null,
+      autopilot: true,
+      balance: 250,
+      lastRun: null,
+      ejected: true,
+    }),
+  // A deliberate login or connect is the player asking to come back, which is
+  // the opposite of an eject, so the guard comes down.
+  resetEjected: () => set({ ejected: false }),
   chooseDifficulty: (difficulty, godMode = false) =>
     // GOD MODE is only reachable from HARD, so it cannot survive a downgrade.
     set({ difficulty, godMode: difficulty === 'hard' ? godMode : false }),

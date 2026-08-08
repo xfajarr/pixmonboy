@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { press, renderScreen } from '../../test/harness'
-import { priceFromBinId, widthFromBins } from '../../lib/range/bins'
+import { poolPriceFromBinId, widthFromBins } from '../../lib/range/bins'
 import { planForOffsets, planForWidth } from '../../lib/range/plan'
 import { price } from '../../lib/format'
 import { SetRange } from './SetRange'
@@ -32,6 +32,18 @@ const POOL: Pool = {
   lpConcentration: 0.1,
   realizedVol24h: 0.4,
 }
+
+/**
+ * The price the SCREEN prints, with POOL's decimals already applied.
+ *
+ * The expectations below used the raw `priceFromBinId` and passed for as long
+ * as nothing compared them to a rendered string that had been scaled. POOL is
+ * an 18-decimal token against a 6-decimal one, so raw and rendered differ by
+ * 10^12: the test was asserting `2e-12` while the screen drew `2`. Binding the
+ * decimals once here keeps the two definitions from drifting apart again.
+ */
+const poolPrice = (binId: number, binStep: number) =>
+  poolPriceFromBinId(binId, binStep, POOL.tokenX.decimals, POOL.tokenY.decimals)
 
 /**
  * SetRange is purely controlled: amount/width/autopilot come from props and
@@ -97,6 +109,7 @@ function renderSetRange(
         }}
         onConfirm={overrides.onConfirm ?? onConfirm}
         onBack={overrides.onBack ?? onBack}
+        deposit={overrides.deposit ?? { status: 'idle' }}
       />
     )
   }
@@ -369,8 +382,8 @@ describe('the manual range editor', () => {
   it("opens seeded at the current WIDE plan's edges", () => {
     const { container } = renderSetRange()
 
-    const beforeLow = price(priceFromBinId(basePlan.lowerBinId, POOL.binStep))
-    const beforeHigh = price(priceFromBinId(basePlan.upperBinId, POOL.binStep))
+    const beforeLow = price(poolPrice(basePlan.lowerBinId, POOL.binStep))
+    const beforeHigh = price(poolPrice(basePlan.upperBinId, POOL.binStep))
     expect(container.textContent).toContain(beforeLow)
     expect(container.textContent).toContain(beforeHigh)
 
@@ -383,8 +396,8 @@ describe('the manual range editor', () => {
       lowerPct: seededLowerPct,
       upperPct: seededUpperPct,
     })
-    const afterLow = price(priceFromBinId(seededPlan.lowerBinId, POOL.binStep))
-    const afterHigh = price(priceFromBinId(seededPlan.upperBinId, POOL.binStep))
+    const afterLow = price(poolPrice(seededPlan.lowerBinId, POOL.binStep))
+    const afterHigh = price(poolPrice(seededPlan.upperBinId, POOL.binStep))
     expect(container.textContent).toContain(afterLow)
     expect(container.textContent).toContain(afterHigh)
   })
@@ -397,7 +410,7 @@ describe('the manual range editor', () => {
       lowerPct: seededLowerPct,
       upperPct: seededUpperPct,
     })
-    const beforeLow = price(priceFromBinId(beforePlan.lowerBinId, POOL.binStep))
+    const beforeLow = price(poolPrice(beforePlan.lowerBinId, POOL.binStep))
     // The overlay renders after the base screen in DOM order (it is the
     // last child appended to the root), so the LAST match of this pattern
     // in the full text is the editor's own bins row, not the base screen's.
@@ -412,7 +425,7 @@ describe('the manual range editor', () => {
       lowerPct: START_STEP_DOWN(seededLowerPct),
       upperPct: seededUpperPct,
     })
-    const afterLow = price(priceFromBinId(afterPlan.lowerBinId, POOL.binStep))
+    const afterLow = price(poolPrice(afterPlan.lowerBinId, POOL.binStep))
     const afterBins = lastMatch(
       container.textContent,
       /\d+ bps steps, \d+ bins/g,

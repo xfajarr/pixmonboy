@@ -6,30 +6,47 @@ import { PixelText } from '../../ui'
 export interface MemoryCardProps {
   /** Non-null once a card is already in the slot. A returning player. */
   cardAddress: string | null
+  /**
+   * True while the card is a committed fixture rather than a live Privy
+   * wallet. The screen renders the eight-pixel FIXTURE marker from this flag
+   * rather than from its own knowledge, because the screen cannot tell a real
+   * login from a fixture and must never pretend to. The route owns the truth.
+   */
+  isFixture: boolean
   onInsert: () => void
   onBack: () => void
+  /**
+   * Present once the route can actually sign the player out. The screen shows
+   * an EJECT row for a card already in the slot, and calls this instead of
+   * pretending to know how a wallet logs out. The route owns logout and it
+   * stays invisible to the console vocabulary: the player ejects a memory
+   * card, they do not log out of a wallet.
+   */
+  onEject?: () => void
+  /**
+   * Present once the route can link a wallet the player already owns. The
+   * third row, labeled in console language, calls this instead of `onInsert`.
+   * Kept separate so the screen never decides which method means what: the
+   * route owns the difference between minting a card and bringing one.
+   */
+  onConnectWallet?: () => void
 }
 
 /**
- * The two ways in.
+ * The ways in.
  *
- * Both land on the same fixture card today, which is why `onInsert` takes no
- * argument: the screen must not pretend to know which method was used when
- * neither one has actually run. Both rows exist anyway because the SHAPE is
- * what Phase 3 keeps. When Privy lands (INTEGRATIONS.md section 5) the route
- * swaps `onInsert` and this file does not change.
+ * A fresh player can mint a card (Google or email) or bring a card they
+ * already own (an external wallet). The labels stay in console language, which
+ * is why the third is "Bring your own card" and never the two words a test
+ * guards against. `onInsert` covers the two minting rows; `onConnectWallet`
+ * covers the third, and falls back to `onInsert` when the route has not
+ * wired it, so a fixture session still has a row to press.
  */
-const METHODS = ['Continue with Google', 'Use an email'] as const
-
-/**
- * Stated as facts, never as marketing. No exclamation marks, nothing sold.
- *
- * "no seed phrase" is the one place the forbidden vocabulary is allowed, and
- * it earns the exception by being a removal rather than a demand. The words
- * "wallet", "connect", and "gas" appear nowhere on this screen, and a test
- * fails if they ever do.
- */
-const REASSURANCES = ['no seed phrase', 'no extension', 'free'] as const
+const METHODS = [
+  'Continue with Google',
+  'Use an email',
+  'Bring your own card',
+] as const
 
 /**
  * `0x7a2b...3c3f` becomes `0x7a..3f`. Middle truncation, never a prefix: the
@@ -70,9 +87,31 @@ function shortAddress(address: string): string {
  * also answers the other standing complaint: a correct screen with empty space
  * reads as unfinished, and this screen is mostly air in the wireframe.
  */
-export function MemoryCard({ cardAddress, onInsert, onBack }: MemoryCardProps) {
+export function MemoryCard({
+  cardAddress,
+  isFixture,
+  onInsert,
+  onBack,
+  onEject,
+  onConnectWallet,
+}: MemoryCardProps) {
   const [index, setIndex] = useState(0)
   const inserted = cardAddress !== null
+
+  // The rows are a function of state, not a constant: a returning player gets
+  // CONTINUE and EJECT, a fresh one gets the sign-in methods. The cursor
+  // bounds and the hidden-row logic both read from this so a screen can never
+  // focus a row it did not render.
+  const rows: ReadonlyArray<{ label: string; action: () => void }> = inserted
+    ? [
+        { label: 'Continue', action: onInsert },
+        ...(onEject ? [{ label: 'Eject', action: onEject }] : []),
+      ]
+    : [
+        { label: METHODS[0], action: onInsert },
+        { label: METHODS[1], action: onInsert },
+        { label: METHODS[2], action: onConnectWallet ?? onInsert },
+      ]
 
   useConsoleIntent((intent) => {
     if (intent === 'B') {
@@ -80,13 +119,13 @@ export function MemoryCard({ cardAddress, onInsert, onBack }: MemoryCardProps) {
       return
     }
     if (intent === 'A') {
-      onInsert()
+      rows[index]?.action()
       return
     }
     if (intent === 'UP' || intent === 'DOWN') {
       // No wrap, same rule as every other cursor in this build.
       const next = intent === 'DOWN' ? index + 1 : index - 1
-      if (next >= 0 && next < METHODS.length) setIndex(next)
+      if (next >= 0 && next < rows.length) setIndex(next)
     }
   })
 
@@ -101,14 +140,17 @@ export function MemoryCard({ cardAddress, onInsert, onBack }: MemoryCardProps) {
               ? `${brand.WALLET_UNIT} in`
               : `Insert ${brand.WALLET_UNIT}`}
           </PixelText>
-          {/* Eight pixels of honesty, the same marker S6 carries. Privy is
-              not wired (INTEGRATIONS.md section 5), so both rows below land on
-              a committed fixture card. Nobody watching a demo should believe a
-              Google login just happened, and a screen that lets them is the
-              kind of thing a peer judge checks. */}
-          <PixelText role="micro" tone="dim" upper>
-            Fixture
-          </PixelText>
+          {/* Eight pixels of honesty, the same marker S6 carries. It renders
+              from `isFixture`, which the route owns: before Privy lands, or
+              with no VITE_PRIVY_APP_ID set, the rows land on a committed
+              fixture card and nobody watching a demo should believe a Google
+              login just happened. With Privy configured and hydrated the
+              marker disappears, because then a login really did happen. */}
+          {isFixture ? (
+            <PixelText role="micro" tone="dim" upper>
+              Fixture
+            </PixelText>
+          ) : null}
         </div>
         <PixelText role="micro" tone="dim">
           {inserted
@@ -118,39 +160,16 @@ export function MemoryCard({ cardAddress, onInsert, onBack }: MemoryCardProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        {METHODS.map((method, i) => (
+        {rows.map((row, i) => (
           <MethodRow
-            key={method}
-            label={
-              // A returning player is not signing in again, they are carrying
-              // on. Same control, same callback, honest label.
-              inserted && i === 0 ? 'Continue' : method
-            }
+            key={row.label}
+            label={row.label}
             focused={i === index}
-            // The second method is noise once a card is already in the slot:
-            // it would offer a second way to do a thing that is already done.
-            hidden={inserted && i === 1}
             onSelect={() => {
               setIndex(i)
-              onInsert()
+              row.action()
             }}
           />
-        ))}
-      </div>
-
-      <div className="flex items-center justify-center gap-4">
-        {REASSURANCES.map((fact) => (
-          <span key={fact} className="flex items-center gap-1">
-            {/* A CSS square, not a glyph. The wireframe's bullet is not in
-                Departure Mono's 1079 codepoints and would render as tofu. */}
-            <span
-              aria-hidden="true"
-              className="border-edge bg-panel inline-block h-2 w-2 border"
-            />
-            <PixelText role="micro" tone="dim" upper>
-              {fact}
-            </PixelText>
-          </span>
         ))}
       </div>
     </div>
@@ -224,16 +243,12 @@ function CardArt({ inserted }: { inserted: boolean }) {
 function MethodRow({
   label,
   focused,
-  hidden,
   onSelect,
 }: {
   label: string
   focused: boolean
-  hidden: boolean
   onSelect: () => void
 }) {
-  if (hidden) return null
-
   return (
     <button
       type="button"

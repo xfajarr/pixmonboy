@@ -12,6 +12,7 @@ const DISKS = saveDisks()
 function renderDiskSelect(overrides: Partial<DiskSelectProps> = {}) {
   const onOpen = vi.fn()
   const onBack = vi.fn()
+  const onEject = vi.fn()
 
   const utils = renderScreen(
     <DiskSelect
@@ -24,10 +25,11 @@ function renderDiskSelect(overrides: Partial<DiskSelectProps> = {}) {
       maxDisks={overrides.maxDisks ?? MAX_DISKS}
       onOpen={overrides.onOpen ?? onOpen}
       onBack={overrides.onBack ?? onBack}
+      onEject={overrides.onEject}
     />,
   )
 
-  return { ...utils, onOpen, onBack }
+  return { ...utils, onOpen, onBack, onEject: overrides.onEject ?? onEject }
 }
 
 describe('the shelf', () => {
@@ -180,5 +182,54 @@ describe('missing data, Gate 2.4', () => {
 
     press('B')
     expect(onBack).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('ejecting the card from the shelf', () => {
+  it('renders the eject row only when the route can sign the player out', () => {
+    const { queryByText } = renderDiskSelect({ onEject: undefined })
+
+    expect(queryByText(/eject memory card/i)).not.toBeInTheDocument()
+  })
+
+  it('DOWN past the last disk reaches EJECT, and A ejects', () => {
+    const { onOpen, onEject } = renderDiskSelect({
+      onEject: vi.fn(),
+      cardAddress: FIXTURE_CARD_ADDRESS,
+    })
+
+    // Two disks, so DOWN DOWN parks on the second disk and one more moves to
+    // the eject row. It sits below the empty slots, never over them.
+    press('DOWN', 'DOWN', 'DOWN')
+    press('A')
+
+    expect(onEject).toHaveBeenCalledTimes(1)
+    expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  it('does not open a disk when EJECT is focused', () => {
+    const { onOpen, onEject } = renderDiskSelect({
+      onEject: vi.fn(),
+      cardAddress: FIXTURE_CARD_ADDRESS,
+    })
+
+    press('DOWN', 'DOWN', 'DOWN')
+    press('A')
+
+    expect(onEject).toHaveBeenCalledTimes(1)
+    expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  it('a mouse click on the eject row ejects, because a phone has no A', () => {
+    const { getByText, onEject } = renderDiskSelect({
+      onEject: vi.fn(),
+      cardAddress: FIXTURE_CARD_ADDRESS,
+    })
+
+    const button = getByText(/eject memory card/i).closest('button')
+    if (!button) throw new Error('the eject row is not inside a button')
+    fireEvent.click(button)
+
+    expect(onEject).toHaveBeenCalledTimes(1)
   })
 })

@@ -3,7 +3,7 @@ import { useConsoleIntent } from '../../console/useConsoleInput'
 import { brand } from '../../config/brand'
 import {
   depositSplit,
-  priceFromBinId,
+  poolPriceFromBinId,
   widthFromBins,
 } from '../../lib/range/bins'
 import { planForOffsets, planForSession } from '../../lib/range/plan'
@@ -78,10 +78,29 @@ const ROWS: ReadonlyArray<FocusRow> = ['amount', 'width', 'autopilot']
 type WidthSlot = RangeWidth | 'manual'
 const WIDTH_SLOTS: ReadonlyArray<WidthSlot> = ['wide', 'tight', 'manual']
 
+/**
+ * What the onchain deposit is doing.
+ *
+ * A deposit is five transactions, not one (lib/deposit/plan.ts explains why),
+ * so `sending` carries which one is in flight. A player watching their card
+ * sign five times deserves to know it is progress and not a stutter.
+ */
+export type DepositState =
+  | { status: 'idle' }
+  | { status: 'sending'; step: number; total: number; label: string }
+  | { status: 'opened'; txHash: string; explorerUrl: string | null }
+  | { status: 'failed'; reason: string }
+
 export interface SetRangeProps {
   /** Undefined is a render state, never a throw. Gate 2.4. */
   pool: Pool | undefined
   balance: number
+  /**
+   * Idle on the fixture path, where confirming just walks to the next screen.
+   * The route decides; this screen only draws what it is told, exactly as
+   * `Results` does with `SaveState`.
+   */
+  deposit: DepositState
   amount: number
   width: RangeWidth
   /** Null is the default: WIDE/TIGHT alone. PRD.md 8.2, session.ts. */
@@ -97,6 +116,66 @@ export interface SetRangeProps {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
+}
+
+/**
+ * The footer's first slot, which is the only place that says what A does.
+ *
+ * It already rewrites itself for the MANUAL chip, and the intent handler cites
+ * that rewriting as the licence for one key meaning two things. A deposit is
+ * the third meaning, so it earns a label for the same reason.
+ */
+function confirmLabel(deposit: DepositState): string {
+  switch (deposit.status) {
+    case 'sending':
+      return `${deposit.step}/${deposit.total} signing`
+    case 'opened':
+      return 'A continue'
+    case 'failed':
+      return 'A try again'
+    case 'idle':
+      return 'A confirm'
+  }
+}
+
+/**
+ * One line under the footer, and only when there is something true to say.
+ *
+ * Renders nothing on the fixture path, so a screen that is not depositing looks
+ * exactly as it did before this existed. A deposit that failed prints the
+ * chain's own reason: `addLiquidity` reverts with named Liquidity Book errors
+ * (`LBRouter__AmountSlippageCaught` and twenty-five others are in the ABI for
+ * exactly this) and paraphrasing them here would throw away the one string that
+ * tells whoever is watching what actually went wrong.
+ */
+function DepositNotice({ deposit }: { deposit: DepositState }) {
+  if (deposit.status === 'idle') return null
+
+  return (
+    <div className="flex items-baseline gap-2">
+      <PixelText
+        role="micro"
+        tone={deposit.status === 'failed' ? 'loss' : 'dim'}
+        upper
+      >
+        {deposit.status === 'sending'
+          ? deposit.label
+          : deposit.status === 'opened'
+            ? 'position open onchain'
+            : 'could not open'}
+      </PixelText>
+      {deposit.status === 'failed' ? (
+        <PixelText role="micro" tone="dim" className="truncate">
+          {deposit.reason}
+        </PixelText>
+      ) : null}
+      {deposit.status === 'opened' ? (
+        <PixelText role="micro" tone="dim" className="truncate">
+          {deposit.txHash.slice(0, 10)}
+        </PixelText>
+      ) : null}
+    </div>
+  )
 }
 
 /**
@@ -160,6 +239,7 @@ export function SetRange({
   onToggleAutopilot,
   onConfirm,
   onBack,
+  deposit,
 }: SetRangeProps) {
   const [focusRow, setFocusRow] = useState<FocusRow>('amount')
   const [manualOpen, setManualOpen] = useState(false)
@@ -217,6 +297,10 @@ export function SetRange({
         setManualOpen(true)
         return
       }
+      // A deposit already in flight owns the card. Five transactions are
+      // signed in sequence, and a second press partway through would start a
+      // second set against balances the first one is still moving.
+      if (deposit.status === 'sending') return
       onConfirm()
       return
     }
@@ -286,8 +370,18 @@ export function SetRange({
     )
   }
 
-  const lowPrice = priceFromBinId(range.lowerBinId, pool.binStep)
-  const highPrice = priceFromBinId(range.upperBinId, pool.binStep)
+  const lowPrice = poolPriceFromBinId(
+    range.lowerBinId,
+    pool.binStep,
+    pool.tokenX.decimals,
+    pool.tokenY.decimals,
+  )
+  const highPrice = poolPriceFromBinId(
+    range.upperBinId,
+    pool.binStep,
+    pool.tokenX.decimals,
+    pool.tokenY.decimals,
+  )
 
   // The active bin sits at delta 0, which is index binsBelow in the tile
   // array RangeStrip draws (tiles run -binsBelow..+binsAbove). planRange
@@ -618,6 +712,8 @@ export function SetRange({
 
           Button name, then action. The KEY each button answers to is the
           console shell's job (Console.tsx's legend), never a screen's. */}
+      <DepositNotice deposit={deposit} />
+
       <div className="grid grid-cols-3 items-center gap-1">
         {/* The one slot on this screen that rewrites itself, and it has to.
             A means CONFIRM everywhere except on the MANUAL chip, where it
@@ -630,7 +726,10 @@ export function SetRange({
             onClick={() => setManualOpen(true)}
           />
         ) : (
-          <FooterButton label="A confirm" onClick={onConfirm} />
+          <FooterButton
+            label={confirmLabel(deposit)}
+            onClick={deposit.status === 'sending' ? () => undefined : onConfirm}
+          />
         )}
         <FooterButton label="B back" align="center" onClick={onBack} />
         {/* "Select manual", not "manual range": the overlay's own heading
@@ -787,8 +886,18 @@ function ManualRangeEditor({
     }
   })
 
-  const lowPrice = priceFromBinId(preview.lowerBinId, pool.binStep)
-  const highPrice = priceFromBinId(preview.upperBinId, pool.binStep)
+  const lowPrice = poolPriceFromBinId(
+    preview.lowerBinId,
+    pool.binStep,
+    pool.tokenX.decimals,
+    pool.tokenY.decimals,
+  )
+  const highPrice = poolPriceFromBinId(
+    preview.upperBinId,
+    pool.binStep,
+    pool.tokenX.decimals,
+    pool.tokenY.decimals,
+  )
 
   return (
     <div className="bg-screen absolute inset-0 flex flex-col gap-1 p-2">

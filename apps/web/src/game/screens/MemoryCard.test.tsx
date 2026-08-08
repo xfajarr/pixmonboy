@@ -10,38 +10,52 @@ import type { MemoryCardProps } from './MemoryCard'
 function renderMemoryCard(overrides: Partial<MemoryCardProps> = {}) {
   const onInsert = vi.fn()
   const onBack = vi.fn()
+  const onEject = vi.fn()
+  const onConnectWallet = vi.fn()
 
   const utils = renderScreen(
     <MemoryCard
       cardAddress={
         'cardAddress' in overrides ? (overrides.cardAddress ?? null) : null
       }
+      isFixture={overrides.isFixture ?? true}
       onInsert={overrides.onInsert ?? onInsert}
       onBack={overrides.onBack ?? onBack}
+      onEject={overrides.onEject ?? onEject}
+      onConnectWallet={overrides.onConnectWallet}
     />,
   )
 
-  return { ...utils, onInsert, onBack }
+  return {
+    ...utils,
+    onInsert,
+    onBack,
+    onEject,
+    onConnectWallet: overrides.onConnectWallet ?? onConnectWallet,
+  }
 }
 
 describe('the screen', () => {
-  it('offers both ways in, and states the three reassurances', () => {
+  it('offers all three ways in', () => {
     const { getByText } = renderMemoryCard()
 
     expect(getByText(/continue with google/i)).toBeInTheDocument()
     expect(getByText(/use an email/i)).toBeInTheDocument()
-
-    expect(getByText(/no seed phrase/i)).toBeInTheDocument()
-    expect(getByText(/no extension/i)).toBeInTheDocument()
-    expect(getByText(/^free$/i)).toBeInTheDocument()
+    expect(getByText(/bring your own card/i)).toBeInTheDocument()
   })
 
-  it('says FIXTURE, because Privy is not wired', () => {
-    const { getByText } = renderMemoryCard()
+  it('says FIXTURE while the card is a fixture', () => {
+    const { getByText } = renderMemoryCard({ isFixture: true })
 
     // Eight pixels of honesty. Both rows land on a committed fixture card,
     // and nobody watching a demo should believe a Google login just happened.
     expect(getByText(/fixture/i)).toBeInTheDocument()
+  })
+
+  it('hides FIXTURE once the card is a live Privy wallet', () => {
+    const { container } = renderMemoryCard({ isFixture: false })
+
+    expect(container.textContent).not.toMatch(/fixture/i)
   })
 })
 
@@ -63,14 +77,11 @@ describe('the forbidden vocabulary', () => {
     })
   }
 
-  it('says "seed" only inside the reassurance that removes it', () => {
+  it('never says "seed"', () => {
+    // The reassurance row that once mentioned seed phrases is gone with the
+    // third sign-in row, so the word has no place left on this screen.
     const { container } = renderMemoryCard()
-    const text = container.textContent.toLowerCase()
-
-    const seedMentions = text.match(/seed/g) ?? []
-    const removals = text.match(/no seed phrase/g) ?? []
-    expect(seedMentions).toHaveLength(removals.length)
-    expect(removals).toHaveLength(1)
+    expect(container.textContent.toLowerCase()).not.toContain('seed')
   })
 
   it('keeps the vocabulary rule once a card is already in the slot', () => {
@@ -89,14 +100,14 @@ describe('the cursor', () => {
   it('DOWN moves it and does not wrap past the last method', () => {
     const { container } = renderMemoryCard()
 
-    press('DOWN', 'DOWN', 'DOWN')
+    press('DOWN', 'DOWN', 'DOWN', 'DOWN')
 
-    // Two methods, so the cursor parks on the second however hard it is
-    // pushed. A cursor that wraps past the end of a two item list feels
+    // Three methods, so the cursor parks on the third however hard it is
+    // pushed. A cursor that wraps past the end of a three item list feels
     // broken, not clever, the first time a player hits it.
     const current = container.querySelectorAll('[aria-current="true"]')
     expect(current).toHaveLength(1)
-    expect(current[0].textContent).toMatch(/use an email/i)
+    expect(current[0].textContent).toMatch(/bring your own card/i)
   })
 
   it('UP does not wrap past the first method', () => {
@@ -138,6 +149,41 @@ describe('inserting and going back', () => {
   })
 })
 
+describe('bringing your own card', () => {
+  it('DOWN to the third row and A connects the wallet, not the fixture', () => {
+    const { onConnectWallet, onInsert } = renderMemoryCard({
+      onConnectWallet: vi.fn(),
+    })
+
+    press('DOWN', 'DOWN')
+    press('A')
+
+    expect(onConnectWallet).toHaveBeenCalledTimes(1)
+    expect(onInsert).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the insert action when the route has no connect wiring', () => {
+    const { onInsert } = renderMemoryCard({ onConnectWallet: undefined })
+
+    press('DOWN', 'DOWN')
+    press('A')
+
+    expect(onInsert).toHaveBeenCalledTimes(1)
+  })
+
+  it('a mouse click brings your own card too, because a phone has no A', () => {
+    const { getByText, onConnectWallet } = renderMemoryCard({
+      onConnectWallet: vi.fn(),
+    })
+
+    const button = getByText(/bring your own card/i).closest('button')
+    if (!button) throw new Error('a method row is not inside a button')
+    fireEvent.click(button)
+
+    expect(onConnectWallet).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('the returning player', () => {
   it('shows the card as already in the slot, with its address truncated', () => {
     const { getByText } = renderMemoryCard({
@@ -165,5 +211,35 @@ describe('the returning player', () => {
     press('A')
 
     expect(onInsert).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('ejecting the card', () => {
+  it('offers EJECT only once a card is in the slot', () => {
+    const { queryByText, getByText } = renderMemoryCard({
+      cardAddress: FIXTURE_CARD_ADDRESS,
+    })
+
+    // The row exists for a returning player, labelled in console language.
+    expect(getByText(/^eject$/i)).toBeInTheDocument()
+    expect(queryByText(/use an email/i)).not.toBeInTheDocument()
+  })
+
+  it('DOWN moves the cursor onto EJECT and A ejects', () => {
+    const { onEject, onInsert } = renderMemoryCard({
+      cardAddress: FIXTURE_CARD_ADDRESS,
+    })
+
+    press('DOWN')
+    press('A')
+
+    expect(onEject).toHaveBeenCalledTimes(1)
+    expect(onInsert).not.toHaveBeenCalled()
+  })
+
+  it('does not eject on the insert screen, where there is no card', () => {
+    const { queryByText } = renderMemoryCard()
+
+    expect(queryByText(/^eject$/i)).not.toBeInTheDocument()
   })
 })

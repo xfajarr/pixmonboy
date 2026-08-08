@@ -35,6 +35,13 @@ export interface DiskSelectProps {
   maxDisks: number
   onOpen: (diskId: number) => void
   onBack: () => void
+  /**
+   * Present once the route can sign the player out. Renders an EJECT row
+   * below the disks (never on the empty slots), reachable by cursor, and
+   * calls this instead of pretending to know how a wallet logs out. In
+   * console vocabulary: the player ejects a memory card.
+   */
+  onEject?: () => void
 }
 
 /**
@@ -80,8 +87,14 @@ export function DiskSelect({
   maxDisks,
   onOpen,
   onBack,
+  onEject,
 }: DiskSelectProps) {
   const [index, setIndex] = useState(0)
+
+  // The eject row is a focusable control BELOW the disks, and only when a card
+  // is in the slot. The cursor walks disks + eject, never the empty slots.
+  const canEject = cardAddress !== null && onEject !== undefined
+  const focusCount = disks.length + (canEject ? 1 : 0)
 
   useConsoleIntent((intent) => {
     if (intent === 'B') {
@@ -96,15 +109,16 @@ export function DiskSelect({
       // empty shelf is a real state (a brand new card) and A on it must do
       // nothing rather than throw.
       if (index < disks.length) onOpen(disks[index].diskId)
+      else if (canEject && index === disks.length) onEject()
       return
     }
     if (intent === 'UP' || intent === 'DOWN') {
-      // The cursor walks the DISKS, not the slots. An empty slot cannot be
-      // opened (creating one needs DiskRegistry, which is Phase 3), and a
-      // cursor that can land on a dead control is a dead end on stage.
-      // No wrap, same rule as every other cursor in this build.
+      // The cursor walks the DISKS and the EJECT row, not the empty slots.
+      // An empty slot cannot be opened (creating one needs DiskRegistry, which
+      // is Phase 3), and a cursor that can land on a dead control is a dead
+      // end on stage. No wrap, same rule as every other cursor in this build.
       const next = intent === 'DOWN' ? index + 1 : index - 1
-      if (next >= 0 && next < disks.length) setIndex(next)
+      if (next >= 0 && next < focusCount) setIndex(next)
     }
   })
 
@@ -151,6 +165,19 @@ export function DiskSelect({
         {Array.from({ length: emptySlots }, (_, i) => (
           <EmptySlot key={`empty-${i}`} slot={disks.length + i + 1} />
         ))}
+        {/* Eject sits BELOW the disks and BELOW the empty slots: it acts on
+            the card, not on any slot, so it is never confused for a third
+            disk. Only rendered when the route can actually sign the player
+            out. */}
+        {canEject ? (
+          <EjectRow
+            focused={index === disks.length}
+            onEject={() => {
+              setIndex(disks.length)
+              onEject()
+            }}
+          />
+        ) : null}
         {/* A card with no disks at all is a real screen, not a blank one.
             Gate 2.4 again, and it is the state a brand new player is in. */}
         {disks.length === 0 ? (
@@ -299,5 +326,46 @@ function EmptySlot({ slot }: { slot: number }) {
         new disks arrive with the registry.
       </PixelText>
     </div>
+  )
+}
+
+/**
+ * The card out of the slot. Console language, same contract as S1's EJECT:
+ * the player ejects a memory card, the route owns the logout.
+ *
+ * Deliberately a plain button and not flex-1 like the disk rows, so it reads
+ * as an action on the shelf rather than a slot on the shelf.
+ */
+function EjectRow({
+  focused,
+  onEject,
+}: {
+  focused: boolean
+  onEject: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onEject}
+      aria-current={focused ? 'true' : undefined}
+      className={`pressable border-edge flex items-center gap-2 border px-1 ${
+        focused ? 'bg-accent' : 'bg-panel'
+      }`}
+    >
+      {focused ? (
+        <span aria-hidden="true" className="bg-ink-invert h-4 w-1 shrink-0" />
+      ) : null}
+      <PixelText role="body" tone={focused ? 'invert' : 'ink'} upper>
+        Eject {brand.WALLET_UNIT}
+      </PixelText>
+      <PixelText
+        role="micro"
+        tone={focused ? 'invert' : 'dim'}
+        className="ml-auto"
+        upper
+      >
+        sign out
+      </PixelText>
+    </button>
   )
 }

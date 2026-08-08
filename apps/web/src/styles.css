@@ -195,3 +195,42 @@ canvas {
     animation: none !important;
   }
 }
+
+/*
+  The Privy modal's logo, styled to the Daylight system.
+
+  Privy renders the logo element you pass it and overwrites inline styles, so
+  nothing here can be inlined. The mark is the memory-card glyph from S1 drawn
+  in the same three tokens, standing next to the wordmark in the screen font.
+  It lives in styles.css rather than inline because Privy owns the DOM node
+  and this is the one file that reaches into a third-party surface.
+*/
+.privy-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.privy-brand-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  background: var(--color-panel);
+  border: 2px solid var(--color-ink);
+  box-shadow: 2px 2px 0 0 var(--color-sunk);
+}
+
+.privy-brand-pads {
+  width: 3px;
+  height: 12px;
+  background: var(--color-accent);
+}
+
+.privy-brand-word {
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: 1px;
+  color: var(--color-ink);
+}

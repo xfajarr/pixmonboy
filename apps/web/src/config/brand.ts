@@ -8,9 +8,11 @@
 
 export const brand = {
   /** The virtual handheld itself. */
-  CONSOLE_NAME: 'MONADBOY',
+  CONSOLE_NAME: 'PIXMON BOY',
   /** The first cartridge. The LP game. */
   CARTRIDGE_01: 'STAY IN RANGE',
+  /** The second cartridge. The live price prediction game. */
+  CARTRIDGE_02: 'MONSPELL',
   /** The out of range early warning. Never called a prediction. */
   ALERT_NAME: 'NAD-SENSE',
   /** The onchain save slot. */

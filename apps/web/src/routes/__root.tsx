@@ -7,6 +7,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
+import { PrivyGate } from '../integrations/privy/PrivyGate'
 
 import appCss from '../styles.css?url'
 import { brand } from '../config/brand'
@@ -48,7 +49,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        {/* PrivyGate renders its children untouched before hydration and on
+            the fixture path, so the shell itself never depends on Privy. */}
+        <PrivyGate>{children}</PrivyGate>
         <TanStackDevtools
           config={{
             position: 'bottom-right',
